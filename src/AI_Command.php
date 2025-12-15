@@ -119,7 +119,7 @@ class AI_Command extends WP_CLI_Command {
 			// Apply model preferences if specified
 			if ( isset( $assoc_args['model'] ) ) {
 				$model_parts = explode( ',', $assoc_args['model'] );
-				
+
 				// Models should be in pairs: provider,model,provider,model,...
 				if ( count( $model_parts ) % 2 !== 0 ) {
 					WP_CLI::error( 'Model must be in format "provider,model" pairs (e.g., "openai,gpt-4" or "openai,gpt-4,anthropic,claude-3").' );
@@ -127,7 +127,8 @@ class AI_Command extends WP_CLI_Command {
 
 				// Convert flat array to array of [provider, model] pairs
 				$model_preferences = array();
-				for ( $i = 0; $i < count( $model_parts ); $i += 2 ) {
+				$parts_count       = count( $model_parts );
+				for ( $i = 0; $i < $parts_count; $i += 2 ) {
 					$model_preferences[] = array( $model_parts[ $i ], $model_parts[ $i + 1 ] );
 				}
 
