@@ -53,11 +53,20 @@ class AI_Command extends WP_CLI_Command {
 	 * <prompt>
 	 * : The prompt to send to the AI.
 	 *
-	 * [--temperature=<temperature>]
-	 * : Temperature for text generation (0.0-2.0). Lower is more deterministic.
+	 * [--model=<models>]
+	 * : Comma-separated list of models in order of preference. Format: "provider,model" (e.g., "openai,gpt-4" or "openai,gpt-4,anthropic,claude-3").
 	 *
-	 * [--model=<model>]
-	 * : Specific model to use in format "provider,model" (e.g., "openai,gpt-4").
+	 * [--provider=<provider>]
+	 * : Specific AI provider to use (e.g., "openai", "anthropic", "google").
+	 *
+	 * [--temperature=<temperature>]
+	 * : Temperature for generation (0.0-2.0). Lower is more deterministic.
+	 *
+	 * [--max-tokens=<tokens>]
+	 * : Maximum number of tokens to generate.
+	 *
+	 * [--system-instruction=<instruction>]
+	 * : System instruction to guide the AI's behavior.
 	 *
 	 * [--output=<file>]
 	 * : For image generation, path to save the generated image.
@@ -70,8 +79,14 @@ class AI_Command extends WP_CLI_Command {
 	 *     # Generate text
 	 *     $ wp ai generate text "Explain WordPress in one sentence"
 	 *
-	 *     # Generate text with lower temperature
-	 *     $ wp ai generate text "List 3 WordPress features" --temperature=0.1
+	 *     # Generate text with specific settings
+	 *     $ wp ai generate text "List 3 WordPress features" --temperature=0.1 --max-tokens=100
+	 *
+	 *     # Generate with model preferences
+	 *     $ wp ai generate text "Write a haiku" --model=openai,gpt-4,anthropic,claude-3
+	 *
+	 *     # Generate with system instruction
+	 *     $ wp ai generate text "Explain AI" --system-instruction="Explain as if to a 5-year-old"
 	 *
 	 *     # Generate image
 	 *     $ wp ai generate image "A minimalist WordPress logo" --output=wp-logo.png
@@ -96,6 +111,33 @@ class AI_Command extends WP_CLI_Command {
 		try {
 			$builder = AI_Client::prompt( $prompt );
 
+			// Apply provider if specified
+			if ( isset( $assoc_args['provider'] ) ) {
+				$builder = $builder->using_provider( $assoc_args['provider'] );
+			}
+
+			// Apply model preferences if specified
+			if ( isset( $assoc_args['model'] ) ) {
+				$model_parts = explode( ',', $assoc_args['model'] );
+				
+				// Models should be in pairs: provider,model,provider,model,...
+				if ( count( $model_parts ) % 2 !== 0 ) {
+					WP_CLI::error( 'Model must be in format "provider,model" pairs (e.g., "openai,gpt-4" or "openai,gpt-4,anthropic,claude-3").' );
+				}
+
+				// Convert flat array to array of [provider, model] pairs
+				$model_preferences = array();
+				for ( $i = 0; $i < count( $model_parts ); $i += 2 ) {
+					$model_preferences[] = array( $model_parts[ $i ], $model_parts[ $i + 1 ] );
+				}
+
+				// Pass all preferences to using_model_preference
+				$builder = call_user_func_array(
+					array( $builder, 'using_model_preference' ),
+					$model_preferences
+				);
+			}
+
 			// Apply temperature if specified
 			if ( isset( $assoc_args['temperature'] ) ) {
 				$temperature = (float) $assoc_args['temperature'];
@@ -105,14 +147,18 @@ class AI_Command extends WP_CLI_Command {
 				$builder = $builder->using_temperature( $temperature );
 			}
 
-			// Apply specific model if specified
-			if ( isset( $assoc_args['model'] ) ) {
-				$model_parts = explode( ',', $assoc_args['model'], 2 );
-				if ( count( $model_parts ) !== 2 ) {
-					WP_CLI::error( 'Model must be in format "provider,model" (e.g., "openai,gpt-4").' );
+			// Apply max tokens if specified
+			if ( isset( $assoc_args['max-tokens'] ) ) {
+				$max_tokens = (int) $assoc_args['max-tokens'];
+				if ( $max_tokens <= 0 ) {
+					WP_CLI::error( 'Max tokens must be a positive integer.' );
 				}
-				// using_model_preference takes arrays as variadic parameters
-				$builder = $builder->using_model_preference( $model_parts );
+				$builder = $builder->using_max_tokens( $max_tokens );
+			}
+
+			// Apply system instruction if specified
+			if ( isset( $assoc_args['system-instruction'] ) ) {
+				$builder = $builder->using_system_instruction( $assoc_args['system-instruction'] );
 			}
 
 			if ( 'text' === $type ) {

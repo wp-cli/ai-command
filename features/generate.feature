@@ -18,3 +18,24 @@ Feature: Generate AI content
       """
       WordPress AI Client is not available
       """
+
+  Scenario: Generate command validates model format
+    When I try `wp ai generate text "Test prompt" --model=invalidformat`
+    Then the return code should be 1
+
+  Scenario: Generate command validates temperature range
+    When I try `wp ai generate text "Test prompt" --temperature=3.0`
+    Then the return code should be 1
+    And STDERR should contain:
+      """
+      Temperature must be between 0.0 and 2.0
+      """
+
+  Scenario: Generate command validates max-tokens
+    When I try `wp ai generate text "Test prompt" --max-tokens=-5`
+    Then the return code should be 1
+    And STDERR should contain:
+      """
+      Max tokens must be a positive integer
+      """
+
