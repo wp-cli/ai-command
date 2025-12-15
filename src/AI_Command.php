@@ -131,11 +131,8 @@ class AI_Command extends WP_CLI_Command {
 					$model_preferences[] = array( $model_parts[ $i ], $model_parts[ $i + 1 ] );
 				}
 
-				// Pass all preferences to using_model_preference
-				$builder = call_user_func_array(
-					array( $builder, 'using_model_preference' ),
-					$model_preferences
-				);
+				// Pass all preferences to using_model_preference using spread operator
+				$builder = $builder->using_model_preference( ...$model_preferences );
 			}
 
 			// Apply temperature if specified
