@@ -192,7 +192,11 @@ class AI_Command extends WP_CLI_Command {
 		$text = $builder->generate_text();
 
 		if ( 'json' === $format ) {
-			WP_CLI::line( json_encode( array( 'text' => $text ) ) );
+			$json = json_encode( array( 'text' => $text ) );
+			if ( false === $json ) {
+				WP_CLI::error( 'Failed to encode text as JSON: ' . json_last_error_msg() );
+			}
+			WP_CLI::line( $json );
 		} else {
 			WP_CLI::success( 'Generated text:' );
 			WP_CLI::line( $text );
@@ -217,28 +221,28 @@ class AI_Command extends WP_CLI_Command {
 		if ( isset( $assoc_args['output'] ) ) {
 			$output_path = $assoc_args['output'];
 
-			// Validate output path - check for directory traversal attempts
-			if ( false !== strpos( $output_path, '..' ) ) {
-				WP_CLI::error( 'Invalid output path: directory traversal detected.' );
-			}
-
-			// Ensure parent directory exists
+			// Resolve the full real path
 			$parent_dir = dirname( $output_path );
-			if ( ! file_exists( $parent_dir ) ) {
+
+			// Check if parent directory exists
+			if ( ! file_exists( $parent_dir ) || ! is_dir( $parent_dir ) ) {
 				WP_CLI::error( 'Invalid output directory. Directory does not exist: ' . $parent_dir );
 			}
 
-			// Validate output path - ensure it's not trying to write to system directories
-			$real_path = realpath( $parent_dir );
-			if ( false === $real_path ) {
-				WP_CLI::error( 'Invalid output directory. Cannot resolve path.' );
+			// Resolve the real path to prevent traversal attacks
+			$real_parent_dir = realpath( $parent_dir );
+			if ( false === $real_parent_dir ) {
+				WP_CLI::error( 'Cannot resolve output directory path.' );
 			}
+
+			// Reconstruct the output path with the resolved parent directory
+			$safe_output_path = $real_parent_dir . DIRECTORY_SEPARATOR . basename( $output_path );
 
 			// Prevent writing to sensitive system directories
 			$forbidden_paths = array( '/etc', '/bin', '/usr/bin', '/sbin', '/usr/sbin', '/boot', '/sys', '/proc' );
 			foreach ( $forbidden_paths as $forbidden ) {
-				if ( 0 === strpos( $real_path, $forbidden ) ) {
-					WP_CLI::error( 'Cannot write to system directory: ' . $output_path );
+				if ( 0 === strpos( $real_parent_dir, $forbidden ) ) {
+					WP_CLI::error( 'Cannot write to system directory: ' . $safe_output_path );
 				}
 			}
 
@@ -266,12 +270,12 @@ class AI_Command extends WP_CLI_Command {
 			}
 
 			// Save to file
-			$result = file_put_contents( $output_path, $image_data );
+			$result = file_put_contents( $safe_output_path, $image_data );
 			if ( false === $result ) {
-				WP_CLI::error( 'Failed to save image to ' . $output_path );
+				WP_CLI::error( 'Failed to save image to ' . $safe_output_path );
 			}
 
-			WP_CLI::success( 'Image saved to ' . $output_path );
+			WP_CLI::success( 'Image saved to ' . $safe_output_path );
 		} else {
 			// Output data URI
 			WP_CLI::success( 'Image generated (data URI):' );
