@@ -31,9 +31,16 @@ use WordPress\AI_Client\AI_Client;
 class AI_Command extends WP_CLI_Command {
 
 	/**
-	 * Maximum size for base64-encoded image data (50MB binary = ~67MB base64).
+	 * Maximum binary image size in bytes (50MB).
 	 */
-	const MAX_IMAGE_SIZE_BASE64 = 70000000; // 50 * 1024 * 1024 * 4 / 3 rounded up
+	const MAX_IMAGE_SIZE_BYTES = 52428800; // 50 * 1024 * 1024
+
+	/**
+	 * Maximum size for base64-encoded image data.
+	 * Base64 encoding increases size by ~33%, so 50MB binary = ~67MB base64.
+	 * Using 70MB as safe upper bound.
+	 */
+	const MAX_IMAGE_SIZE_BASE64 = 70000000;
 
 	/**
 	 * Generates AI content.
@@ -239,9 +246,24 @@ class AI_Command extends WP_CLI_Command {
 			$safe_output_path = $real_parent_dir . DIRECTORY_SEPARATOR . basename( $output_path );
 
 			// Prevent writing to sensitive system directories
-			$forbidden_paths = array( '/etc', '/bin', '/usr/bin', '/sbin', '/usr/sbin', '/boot', '/sys', '/proc' );
+			$forbidden_paths = array(
+				// Unix/Linux system directories
+				'/etc',
+				'/bin',
+				'/usr/bin',
+				'/sbin',
+				'/usr/sbin',
+				'/boot',
+				'/sys',
+				'/proc',
+				// Windows system directories (case-insensitive)
+				'C:\\Windows',
+				'C:\\Program Files',
+				'C:\\Program Files (x86)',
+			);
 			foreach ( $forbidden_paths as $forbidden ) {
-				if ( 0 === strpos( $real_parent_dir, $forbidden ) ) {
+				// Case-insensitive comparison for Windows paths
+				if ( 0 === stripos( $real_parent_dir, $forbidden ) ) {
 					WP_CLI::error( 'Cannot write to system directory: ' . $safe_output_path );
 				}
 			}
