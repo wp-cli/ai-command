@@ -31,6 +31,11 @@ use WordPress\AI_Client\AI_Client;
 class AI_Command extends WP_CLI_Command {
 
 	/**
+	 * Maximum size for base64-encoded image data (50MB binary = ~67MB base64).
+	 */
+	const MAX_IMAGE_SIZE_BASE64 = 70000000; // 50 * 1024 * 1024 * 4 / 3 rounded up
+
+	/**
 	 * Generates AI content.
 	 *
 	 * ## OPTIONS
@@ -246,20 +251,18 @@ class AI_Command extends WP_CLI_Command {
 				WP_CLI::error( 'Invalid image data received.' );
 			}
 
-			// Validate base64 format before decoding
+			// Validate and decode base64 data
 			$base64_data = $data_parts[1];
-			if ( ! preg_match( '/^[a-zA-Z0-9\/\r\n+]*={0,2}$/', $base64_data ) ) {
-				WP_CLI::error( 'Invalid base64 data format.' );
+
+			// Check reasonable size limit
+			if ( strlen( $base64_data ) > self::MAX_IMAGE_SIZE_BASE64 ) {
+				WP_CLI::error( 'Image data exceeds maximum size limit (50MB).' );
 			}
 
-			// Check reasonable size limit (e.g., 50MB)
-			if ( strlen( $base64_data ) > 50 * 1024 * 1024 * 4 / 3 ) {
-				WP_CLI::error( 'Image data exceeds maximum size limit.' );
-			}
-
+			// Try strict base64 decode - this validates format
 			$image_data = base64_decode( $base64_data, true );
 			if ( false === $image_data ) {
-				WP_CLI::error( 'Failed to decode image data.' );
+				WP_CLI::error( 'Invalid base64 image data format.' );
 			}
 
 			// Save to file
