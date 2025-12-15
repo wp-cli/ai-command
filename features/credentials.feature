@@ -20,7 +20,7 @@ Feature: Manage AI provider credentials
     When I run `wp ai credentials list --format=json`
     Then STDOUT should be JSON containing:
       """
-      [{"provider":"openai","api_key":"sk-***56789"}]
+      [{"provider":"openai","api_key":"sk-*********6789"}]
       """
 
   Scenario: Get specific provider credentials
@@ -37,7 +37,7 @@ Feature: Manage AI provider credentials
       """
     And STDOUT should contain:
       """
-      "api_key":"sk-***-123"
+      "api_key":"sk-************-123"
       """
 
   Scenario: Delete provider credentials
@@ -81,9 +81,9 @@ Feature: Manage AI provider credentials
     And I run `wp ai credentials set anthropic --api-key=sk-ant-api-456`
     And I run `wp ai credentials list`
     Then STDOUT should be a table containing rows:
-      | provider  | api_key       |
-      | openai    | sk-***ai123   |
-      | anthropic | sk-***pi-456  |
+      | provider  | api_key          |
+      | openai    | sk-*****i123     |
+      | anthropic | sk-********-456  |
 
   Scenario: Update existing credentials
     When I run `wp ai credentials set openai --api-key=old-key-123`
@@ -101,5 +101,5 @@ Feature: Manage AI provider credentials
     When I run `wp ai credentials get openai --format=json`
     Then STDOUT should contain:
       """
-      "api_key":"new***-456"
+      "api_key":"new****-456"
       """
