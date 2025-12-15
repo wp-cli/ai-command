@@ -99,6 +99,7 @@ class AI_Command extends WP_CLI_Command {
 				if ( count( $model_parts ) !== 2 ) {
 					WP_CLI::error( 'Model must be in format "provider,model" (e.g., "openai,gpt-4").' );
 				}
+				// using_model_preference takes arrays as variadic parameters
 				$builder = $builder->using_model_preference( $model_parts );
 			}
 
@@ -171,8 +172,8 @@ class AI_Command extends WP_CLI_Command {
 	/**
 	 * Generates text from the prompt builder.
 	 *
-	 * @param mixed $builder     The prompt builder.
-	 * @param array $assoc_args Associative arguments.
+	 * @param \WordPress\AI_Client\Builders\Prompt_Builder $builder     The prompt builder.
+	 * @param array                                        $assoc_args Associative arguments.
 	 * @return void
 	 */
 	private function generate_text( $builder, $assoc_args ) {
@@ -186,7 +187,7 @@ class AI_Command extends WP_CLI_Command {
 		$text = $builder->generate_text();
 
 		if ( 'json' === $format ) {
-			WP_CLI::line( wp_json_encode( array( 'text' => $text ) ) );
+			WP_CLI::line( json_encode( array( 'text' => $text ) ) );
 		} else {
 			WP_CLI::success( 'Generated text:' );
 			WP_CLI::line( $text );
@@ -196,8 +197,8 @@ class AI_Command extends WP_CLI_Command {
 	/**
 	 * Generates an image from the prompt builder.
 	 *
-	 * @param mixed $builder     The prompt builder.
-	 * @param array $assoc_args Associative arguments.
+	 * @param \WordPress\AI_Client\Builders\Prompt_Builder $builder     The prompt builder.
+	 * @param array                                        $assoc_args Associative arguments.
 	 * @return void
 	 */
 	private function generate_image( $builder, $assoc_args ) {
@@ -211,6 +212,20 @@ class AI_Command extends WP_CLI_Command {
 		if ( isset( $assoc_args['output'] ) ) {
 			$output_path = $assoc_args['output'];
 
+			// Validate output path - ensure it's not trying to write to system directories
+			$real_path = realpath( dirname( $output_path ) );
+			if ( false === $real_path ) {
+				WP_CLI::error( 'Invalid output directory. Directory does not exist.' );
+			}
+
+			// Prevent writing to sensitive system directories
+			$forbidden_paths = array( '/etc', '/bin', '/usr/bin', '/sbin', '/usr/sbin', '/boot', '/sys', '/proc' );
+			foreach ( $forbidden_paths as $forbidden ) {
+				if ( 0 === strpos( $real_path, $forbidden ) ) {
+					WP_CLI::error( 'Cannot write to system directory: ' . $output_path );
+				}
+			}
+
 			// Get the image content from data URI
 			$data_uri = $image_file->getDataUri();
 
@@ -220,7 +235,7 @@ class AI_Command extends WP_CLI_Command {
 				WP_CLI::error( 'Invalid image data received.' );
 			}
 
-			$image_data = base64_decode( $data_parts[1] );
+			$image_data = base64_decode( $data_parts[1], true );
 			if ( false === $image_data ) {
 				WP_CLI::error( 'Failed to decode image data.' );
 			}
