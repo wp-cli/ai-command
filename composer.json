@@ -1,0 +1,63 @@
+{
+    "name": "wp-cli/ai-command",
+    "type": "wp-cli-package",
+    "description": "Interacts with the WordPress AI Client",
+    "homepage": "https://github.com/wp-cli/ai-command",
+    "license": "MIT",
+    "authors": [],
+    "require": {
+        "wordpress/wp-ai-client": "^0.2.1",
+        "wp-cli/wp-cli": "^2.12"
+    },
+    "require-dev": {
+        "wp-cli/wp-cli-tests": "^5"
+    },
+    "config": {
+        "process-timeout": 7200,
+        "sort-packages": true,
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true,
+            "php-http/discovery": true,
+            "phpstan/extension-installer": true
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "2.x-dev"
+        },
+        "bundled": false,
+        "commands": [
+            "ai"
+        ]
+    },
+    "autoload": {
+        "psr-4": {
+            "WP_CLI\\AI\\": "src/"
+        },
+        "files": [
+            "ai-command.php"
+        ]
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "scripts": {
+        "behat": "run-behat-tests",
+        "behat-rerun": "rerun-behat-tests",
+        "lint": "run-linter-tests",
+        "phpcs": "run-phpcs-tests",
+        "phpstan": "run-phpstan-tests",
+        "phpcbf": "run-phpcbf-cleanup",
+        "phpunit": "run-php-unit-tests",
+        "prepare-tests": "install-package-tests",
+        "test": [
+            "@lint",
+            "@phpcs",
+            "@phpstan",
+            "@phpunit",
+            "@behat"
+        ]
+    },
+    "support": {
+        "issues": "https://github.com/wp-cli/ai-command/issues"
+    }
+}
