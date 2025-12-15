@@ -27,7 +27,7 @@ class Credentials_Command extends WP_CLI_Command {
 	/**
 	 * The option name where credentials are stored.
 	 */
-	const OPTION_NAME = 'wp_ai_credentials';
+	const OPTION_NAME = 'wp_ai_client_provider_credentials';
 
 	/**
 	 * Lists all stored AI provider credentials.
