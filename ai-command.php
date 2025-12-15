@@ -15,3 +15,4 @@ if ( file_exists( $wpcli_ai_autoloader ) ) {
 }
 
 WP_CLI::add_command( 'ai', AI_Command::class );
+WP_CLI::add_command( 'ai credentials', Credentials_Command::class );
