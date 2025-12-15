@@ -3,15 +3,21 @@ wp-cli/ai-command
 
 Interacts with the WordPress AI Client
 
-[![Build Status](https://travis-ci.org/wp-cli/ai-command.svg?branch=master)](https://travis-ci.org/wp-cli/ai-command)
+[![Testing](https://github.com/wp-cli/ai-command/actions/workflows/testing.yml/badge.svg)](https://github.com/wp-cli/ai-command/actions/workflows/testing.yml)
 
 Quick links: [Using](#using) | [Installing](#installing) | [Contributing](#contributing) | [Support](#support)
 
 ## Using
 
 ~~~
-wp hello-world
+wp ai 
 ~~~
+
+**EXAMPLES**
+
+    # Greet the world.
+    $ wp hello-world
+    Success: Hello World!
 
 ## Installing
 
@@ -26,7 +32,7 @@ wp package install wp-cli/ai-command:@stable
 To install the latest development version of this package, use the following command instead:
 
 ```bash
-wp package install wp-cli/ai-command:dev-master
+wp package install wp-cli/ai-command:dev-main
 ```
 
 ## Contributing
