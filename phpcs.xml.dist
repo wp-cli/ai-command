@@ -27,8 +27,8 @@
 	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
 		<properties>
 			<property name="prefixes" type="array">
-				<element value="WP_CLI\Ability"/><!-- Namespaces. -->
-				<element value="wpcli_ability"/><!-- Global variables and such. -->
+				<element value="WP_CLI\AI"/><!-- Namespaces. -->
+				<element value="wpcli_ai"/><!-- Global variables and such. -->
 			</property>
 		</properties>
 	</rule>
