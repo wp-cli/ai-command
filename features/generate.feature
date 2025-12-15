@@ -19,6 +19,14 @@ Feature: Generate AI content
       WordPress AI Client is not available
       """
 
+  Scenario: Status command requires AI Client
+    When I try `wp ai status`
+    Then the return code should be 1
+    And STDERR should contain:
+      """
+      WordPress AI Client is not available
+      """
+
   Scenario: Generate command validates model format
     When I try `wp ai generate text "Test prompt" --model=invalidformat`
     Then the return code should be 1

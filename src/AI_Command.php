@@ -11,6 +11,15 @@ use WordPress\AI_Client\AI_Client;
  *
  * ## EXAMPLES
  *
+ *     # Check AI capabilities status
+ *     $ wp ai status
+ *     +------------------+-----------+
+ *     | Capability       | Supported |
+ *     +------------------+-----------+
+ *     | Text Generation  | Yes       |
+ *     | Image Generation | No        |
+ *     +------------------+-----------+
+ *
  *     # Generate text from a prompt
  *     $ wp ai generate text "Write a haiku about WordPress"
  *     Success: Generated text:
@@ -222,6 +231,68 @@ class AI_Command extends WP_CLI_Command {
 			}
 		} catch ( \Exception $e ) {
 			WP_CLI::error( 'Check failed: ' . $e->getMessage() );
+		}
+	}
+
+	/**
+	 * Checks which AI capabilities are currently supported.
+	 *
+	 * Checks the environment and credentials to determine which AI operations
+	 * are available. Displays a table showing supported capabilities.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--format=<format>]
+	 * : Render output in a particular format.
+	 * ---
+	 * default: table
+	 * options:
+	 *   - table
+	 *   - csv
+	 *   - json
+	 *   - yaml
+	 * ---
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     # Check AI status
+	 *     $ wp ai status
+	 *     +------------------+-----------+
+	 *     | Capability       | Supported |
+	 *     +------------------+-----------+
+	 *     | Text Generation  | Yes       |
+	 *     | Image Generation | No        |
+	 *     +------------------+-----------+
+	 *
+	 * @param array $args       Positional arguments.
+	 * @param array $assoc_args Associative arguments.
+	 * @return void
+	 */
+	public function status( $args, $assoc_args ) {
+		if ( ! class_exists( '\WordPress\AI_Client\AI_Client' ) ) {
+			WP_CLI::error( 'WordPress AI Client is not available. Please install wordpress/wp-ai-client.' );
+		}
+
+		try {
+			// Create a basic builder to check capabilities
+			$builder = AI_Client::prompt( 'test' );
+
+			// Check each capability
+			$capabilities = array(
+				array(
+					'capability' => 'Text Generation',
+					'supported'  => $builder->is_supported_for_text_generation() ? 'Yes' : 'No',
+				),
+				array(
+					'capability' => 'Image Generation',
+					'supported'  => $builder->is_supported_for_image_generation() ? 'Yes' : 'No',
+				),
+			);
+
+			$format = $assoc_args['format'] ?? 'table';
+			WP_CLI\Utils\format_items( $format, $capabilities, array( 'capability', 'supported' ) );
+		} catch ( \Exception $e ) {
+			WP_CLI::error( 'Status check failed: ' . $e->getMessage() );
 		}
 	}
 
