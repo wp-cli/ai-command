@@ -212,10 +212,21 @@ class AI_Command extends WP_CLI_Command {
 		if ( isset( $assoc_args['output'] ) ) {
 			$output_path = $assoc_args['output'];
 
+			// Validate output path - check for directory traversal attempts
+			if ( false !== strpos( $output_path, '..' ) ) {
+				WP_CLI::error( 'Invalid output path: directory traversal detected.' );
+			}
+
+			// Ensure parent directory exists
+			$parent_dir = dirname( $output_path );
+			if ( ! file_exists( $parent_dir ) ) {
+				WP_CLI::error( 'Invalid output directory. Directory does not exist: ' . $parent_dir );
+			}
+
 			// Validate output path - ensure it's not trying to write to system directories
-			$real_path = realpath( dirname( $output_path ) );
+			$real_path = realpath( $parent_dir );
 			if ( false === $real_path ) {
-				WP_CLI::error( 'Invalid output directory. Directory does not exist.' );
+				WP_CLI::error( 'Invalid output directory. Cannot resolve path.' );
 			}
 
 			// Prevent writing to sensitive system directories
@@ -235,7 +246,18 @@ class AI_Command extends WP_CLI_Command {
 				WP_CLI::error( 'Invalid image data received.' );
 			}
 
-			$image_data = base64_decode( $data_parts[1], true );
+			// Validate base64 format before decoding
+			$base64_data = $data_parts[1];
+			if ( ! preg_match( '/^[a-zA-Z0-9\/\r\n+]*={0,2}$/', $base64_data ) ) {
+				WP_CLI::error( 'Invalid base64 data format.' );
+			}
+
+			// Check reasonable size limit (e.g., 50MB)
+			if ( strlen( $base64_data ) > 50 * 1024 * 1024 * 4 / 3 ) {
+				WP_CLI::error( 'Image data exceeds maximum size limit.' );
+			}
+
+			$image_data = base64_decode( $base64_data, true );
 			if ( false === $image_data ) {
 				WP_CLI::error( 'Failed to decode image data.' );
 			}
