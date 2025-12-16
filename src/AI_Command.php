@@ -45,6 +45,12 @@ class AI_Command extends WP_CLI_Command {
 	const MAX_IMAGE_SIZE_BYTES = 52428800; // 50 * 1024 * 1024
 
 	/**
+	 * Dummy prompt used for capability checking.
+	 * The actual prompt content doesn't matter for capability detection.
+	 */
+	const CAPABILITY_CHECK_PROMPT = 'capability-check';
+
+	/**
 	 * Maximum size for base64-encoded image data.
 	 * Base64 encoding increases size by ~33%, so 50MB binary = ~67MB base64.
 	 * Using 70MB as safe upper bound.
@@ -105,9 +111,7 @@ class AI_Command extends WP_CLI_Command {
 	 * @return void
 	 */
 	public function generate( $args, $assoc_args ) {
-		if ( ! class_exists( '\WordPress\AI_Client\AI_Client' ) ) {
-			WP_CLI::error( 'WordPress AI Client is not available. Please install wordpress/wp-ai-client.' );
-		}
+		$this->ensure_ai_client_available();
 
 		list( $type, $prompt ) = $args;
 
@@ -202,9 +206,7 @@ class AI_Command extends WP_CLI_Command {
 	 * @return void
 	 */
 	public function check( $args, $assoc_args ) {
-		if ( ! class_exists( '\WordPress\AI_Client\AI_Client' ) ) {
-			WP_CLI::error( 'WordPress AI Client is not available. Please install wordpress/wp-ai-client.' );
-		}
+		$this->ensure_ai_client_available();
 
 		list( $prompt ) = $args;
 		$type           = $assoc_args['type'] ?? 'text';
@@ -269,13 +271,12 @@ class AI_Command extends WP_CLI_Command {
 	 * @return void
 	 */
 	public function status( $args, $assoc_args ) {
-		if ( ! class_exists( '\WordPress\AI_Client\AI_Client' ) ) {
-			WP_CLI::error( 'WordPress AI Client is not available. Please install wordpress/wp-ai-client.' );
-		}
+		$this->ensure_ai_client_available();
 
 		try {
 			// Create a basic builder to check capabilities
-			$builder = AI_Client::prompt( 'test' );
+			// The prompt content doesn't matter for capability detection
+			$builder = AI_Client::prompt( self::CAPABILITY_CHECK_PROMPT );
 
 			// Check each capability
 			$capabilities = array(
@@ -417,6 +418,17 @@ class AI_Command extends WP_CLI_Command {
 			// Output data URI
 			WP_CLI::success( 'Image generated (data URI):' );
 			WP_CLI::line( $image_file->getDataUri() );
+		}
+	}
+
+	/**
+	 * Ensures WordPress AI Client is available.
+	 *
+	 * @return void
+	 */
+	private function ensure_ai_client_available() {
+		if ( ! class_exists( '\WordPress\AI_Client\AI_Client' ) ) {
+			WP_CLI::error( 'WordPress AI Client is not available. Please install wordpress/wp-ai-client.' );
 		}
 	}
 }
