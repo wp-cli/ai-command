@@ -46,7 +46,10 @@ class AI_Command extends WP_CLI_Command {
 
 	/**
 	 * Dummy prompt used for capability checking.
-	 * The actual prompt content doesn't matter for capability detection.
+	 * 
+	 * This constant provides a consistent prompt value when checking AI capabilities.
+	 * The specific content doesn't affect capability detection, which is based on
+	 * configured providers and their available features.
 	 */
 	const CAPABILITY_CHECK_PROMPT = 'capability-check';
 
