@@ -51,6 +51,25 @@ class AI_Command extends WP_CLI_Command {
 	const CAPABILITY_CHECK_PROMPT = 'capability-check';
 
 	/**
+	 * System directories that should be protected from file writes.
+	 */
+	const FORBIDDEN_PATHS = array(
+		// Unix/Linux system directories
+		'/etc',
+		'/bin',
+		'/usr/bin',
+		'/sbin',
+		'/usr/sbin',
+		'/boot',
+		'/sys',
+		'/proc',
+		// Windows system directories (case-insensitive)
+		'C:\\Windows',
+		'C:\\Program Files',
+		'C:\\Program Files (x86)',
+	);
+
+	/**
 	 * Maximum size for base64-encoded image data.
 	 * Base64 encoding increases size by ~33%, so 50MB binary = ~67MB base64.
 	 * Using 70MB as safe upper bound.
@@ -274,8 +293,7 @@ class AI_Command extends WP_CLI_Command {
 		$this->ensure_ai_client_available();
 
 		try {
-			// Create a basic builder to check capabilities
-			// The prompt content doesn't matter for capability detection
+			// Create a basic builder to check capabilities (prompt content doesn't matter for capability detection)
 			$builder = AI_Client::prompt( self::CAPABILITY_CHECK_PROMPT );
 
 			// Check each capability
@@ -362,24 +380,14 @@ class AI_Command extends WP_CLI_Command {
 			$safe_output_path = $real_parent_dir . DIRECTORY_SEPARATOR . basename( $output_path );
 
 			// Prevent writing to sensitive system directories
-			$forbidden_paths = array(
-				// Unix/Linux system directories
-				'/etc',
-				'/bin',
-				'/usr/bin',
-				'/sbin',
-				'/usr/sbin',
-				'/boot',
-				'/sys',
-				'/proc',
-				// Windows system directories (case-insensitive)
-				'C:\\Windows',
-				'C:\\Program Files',
-				'C:\\Program Files (x86)',
-			);
-			foreach ( $forbidden_paths as $forbidden ) {
-				// Case-insensitive comparison for Windows paths
-				if ( 0 === stripos( $real_parent_dir, $forbidden ) ) {
+			foreach ( self::FORBIDDEN_PATHS as $forbidden ) {
+				// Use case-sensitive check for Unix paths, case-insensitive for Windows
+				$is_windows_path = ( 0 === strpos( $forbidden, 'C:\\' ) );
+				$matches         = $is_windows_path
+					? ( 0 === stripos( $real_parent_dir, $forbidden ) )
+					: ( 0 === strpos( $real_parent_dir, $forbidden ) );
+
+				if ( $matches ) {
 					WP_CLI::error( 'Cannot write to system directory: ' . $safe_output_path );
 				}
 			}
