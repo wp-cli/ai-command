@@ -293,7 +293,7 @@ class AI_Command extends WP_CLI_Command {
 		$this->ensure_ai_client_available();
 
 		try {
-			// Create a basic builder to check capabilities (prompt content doesn't matter for capability detection)
+			// Create a builder to check capabilities (using constant for consistency)
 			$builder = AI_Client::prompt( self::CAPABILITY_CHECK_PROMPT );
 
 			// Check each capability
@@ -381,8 +381,8 @@ class AI_Command extends WP_CLI_Command {
 
 			// Prevent writing to sensitive system directories
 			foreach ( self::FORBIDDEN_PATHS as $forbidden ) {
-				// Use case-sensitive check for Unix paths, case-insensitive for Windows
-				$is_windows_path = ( 0 === strpos( $forbidden, 'C:\\' ) );
+				// Use case-sensitive check for Unix paths (start with /), case-insensitive for Windows (contain :\)
+				$is_windows_path = ( false !== strpos( $forbidden, ':\\' ) );
 				$matches         = $is_windows_path
 					? ( 0 === stripos( $real_parent_dir, $forbidden ) )
 					: ( 0 === strpos( $real_parent_dir, $forbidden ) );
