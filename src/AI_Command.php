@@ -46,7 +46,7 @@ class AI_Command extends WP_CLI_Command {
 
 	/**
 	 * Dummy prompt used for capability checking.
-	 * 
+	 *
 	 * This constant provides a consistent prompt value when checking AI capabilities.
 	 * The specific content doesn't affect capability detection, which is based on
 	 * configured providers and their available features.
@@ -399,7 +399,7 @@ class AI_Command extends WP_CLI_Command {
 			$data_uri = $image_file->getDataUri();
 
 			// Extract base64 data from data URI
-			$data_parts = explode( ',', $data_uri, 2 );
+			$data_parts = $data_uri ? explode( ',', $data_uri, 2 ) : [];
 			if ( count( $data_parts ) !== 2 ) {
 				WP_CLI::error( 'Invalid image data received.' );
 			}
@@ -413,6 +413,7 @@ class AI_Command extends WP_CLI_Command {
 			}
 
 			// Try strict base64 decode - this validates format
+			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
 			$image_data = base64_decode( $base64_data, true );
 			if ( false === $image_data ) {
 				WP_CLI::error( 'Invalid base64 image data format.' );
@@ -428,7 +429,7 @@ class AI_Command extends WP_CLI_Command {
 		} else {
 			// Output data URI
 			WP_CLI::success( 'Image generated (data URI):' );
-			WP_CLI::line( $image_file->getDataUri() );
+			WP_CLI::line( (string) $image_file->getDataUri() );
 		}
 	}
 

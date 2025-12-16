@@ -128,7 +128,7 @@ class Credentials_Command extends WP_CLI_Command {
 		$format = $assoc_args['format'] ?? 'json';
 
 		if ( 'json' === $format ) {
-			WP_CLI::line( json_encode( $data ) );
+			WP_CLI::line( (string) json_encode( $data ) );
 		} else {
 			// For yaml and other formats
 			foreach ( $data as $key => $value ) {
