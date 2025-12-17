@@ -5,6 +5,7 @@ namespace WP_CLI\AI;
 use WP_CLI;
 use WP_CLI_Command;
 use WordPress\AI_Client\AI_Client;
+use WordPress\AiClient\Results\DTO\TokenUsage;
 
 /**
  * Interacts with the WordPress AI Client for text and image generation.
@@ -85,7 +86,12 @@ class AI_Command extends WP_CLI_Command {
 	 * ## OPTIONS
 	 *
 	 * <type>
-	 * : Type of content to generate. Options: text, image
+	 * : Type of content to generate.
+	 * ---
+	 * options:
+	 *   - text
+	 *   - image
+	 * ---
 	 *
 	 * <prompt>
 	 * : The prompt to send to the AI.
@@ -109,7 +115,13 @@ class AI_Command extends WP_CLI_Command {
 	 * : For image generation, path to save the generated image.
 	 *
 	 * [--format=<format>]
-	 * : Output format for text. Options: text, json. Default: text
+	 * : Output format for text.
+	 * ---
+	 * default: text
+	 * options:
+	 *   - text
+	 *   - json
+	 * ---
 	 *
 	 * ## EXAMPLES
 	 *
@@ -333,18 +345,38 @@ class AI_Command extends WP_CLI_Command {
 			WP_CLI::error( 'Text generation is not supported. Make sure AI provider credentials are configured.' );
 		}
 
-		$text = $builder->generate_text();
+		$text = $builder->generate_text_result();
 
 		if ( 'json' === $format ) {
-			$json = json_encode( array( 'text' => $text ) );
+			$json = json_encode( array( 'text' => $text->toText() ) );
 			if ( false === $json ) {
 				WP_CLI::error( 'Failed to encode text as JSON: ' . json_last_error_msg() );
 			}
 			WP_CLI::line( $json );
 		} else {
-			WP_CLI::success( 'Generated text:' );
-			WP_CLI::line( $text );
+			WP_CLI::line( $text->toText() );
 		}
+
+		$token_usage = $text->getTokenUsage()->toArray();
+
+		WP_CLI::debug(
+			sprintf(
+				'Model used: %s (%s)',
+				$text->getModelMetadata()->getName(),
+				$text->getProviderMetadata()->getName()
+			),
+			'ai'
+		);
+
+		WP_CLI::debug(
+			sprintf(
+				"Token usage:\nInput tokens: %s\nOutput tokens: %s\nTotal: %s",
+				$token_usage[ TokenUsage::KEY_PROMPT_TOKENS ],
+				$token_usage[ TokenUsage::KEY_COMPLETION_TOKENS ],
+				$token_usage[ TokenUsage::KEY_TOTAL_TOKENS ],
+			),
+			'ai'
+		);
 	}
 
 	/**

@@ -71,10 +71,10 @@ class Credentials_Command extends WP_CLI_Command {
 		}
 
 		$items = array();
-		foreach ( $credentials as $provider => $data ) {
+		foreach ( $credentials as $provider => $api_key ) {
 			$items[] = array(
 				'provider' => $provider,
-				'api_key'  => $this->mask_api_key( $data['api_key'] ?? '' ),
+				'api_key'  => $this->mask_api_key( $api_key ?? '' ),
 			);
 		}
 
@@ -122,7 +122,7 @@ class Credentials_Command extends WP_CLI_Command {
 
 		$data = array(
 			'provider' => $provider,
-			'api_key'  => $this->mask_api_key( $credentials[ $provider ]['api_key'] ?? '' ),
+			'api_key'  => $this->mask_api_key( $credentials[ $provider ] ?? '' ),
 		);
 
 		$format = $assoc_args['format'] ?? 'json';
@@ -261,6 +261,6 @@ class Credentials_Command extends WP_CLI_Command {
 		}
 
 		// Show first 3 and last 4 characters
-		return substr( $api_key, 0, 3 ) . str_repeat( '*', $length - 7 ) . substr( $api_key, -4 );
+		return substr( $api_key, 0, 3 ) . str_repeat( '*', min( 10, $length - 7 ) ) . substr( $api_key, -4 );
 	}
 }
