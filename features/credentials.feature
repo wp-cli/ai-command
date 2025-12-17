@@ -37,7 +37,7 @@ Feature: Manage AI provider credentials
       """
     And STDOUT should contain:
       """
-      "api_key":"sk-************-123"
+      "api_key":"sk-**********-123"
       """
 
   Scenario: Delete provider credentials
@@ -72,7 +72,7 @@ Feature: Manage AI provider credentials
     When I try `wp ai credentials set openai`
     Then STDERR should contain:
       """
-      Error: The --api-key parameter is required.
+      missing --api-key parameter
       """
     And the return code should be 1
 

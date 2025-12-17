@@ -163,10 +163,6 @@ class Credentials_Command extends WP_CLI_Command {
 	public function set( $args, $assoc_args ) {
 		list( $provider ) = $args;
 
-		if ( empty( $assoc_args['api-key'] ) ) {
-			WP_CLI::error( 'The --api-key parameter is required.' );
-		}
-
 		$api_key     = $assoc_args['api-key'];
 		$credentials = $this->get_all_credentials();
 
