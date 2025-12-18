@@ -103,7 +103,7 @@ class AI_Command extends WP_CLI_Command {
 	 * : Specific AI provider to use (e.g., "openai", "anthropic", "google").
 	 *
 	 * [--temperature=<temperature>]
-	 * : Temperature for generation (0.0-2.0). Lower is more deterministic.
+	 * : Temperature for generation, typically between 0.0 and 1.0. Lower is more deterministic.
 	 *
 	 * [--max-tokens=<tokens>]
 	 * : Maximum number of tokens to generate.
@@ -149,50 +149,34 @@ class AI_Command extends WP_CLI_Command {
 
 		list( $type, $prompt ) = $args;
 
-		$type = strtolower( $type );
-
-		if ( ! in_array( $type, array( 'text', 'image' ), true ) ) {
-			WP_CLI::error( 'Invalid type. Must be "text" or "image".' );
-		}
-
 		try {
 			$builder = AI_Client::prompt( $prompt );
 
-			// Apply provider if specified
 			if ( isset( $assoc_args['provider'] ) ) {
 				$builder = $builder->using_provider( $assoc_args['provider'] );
 			}
 
-			// Apply model preferences if specified
 			if ( isset( $assoc_args['model'] ) ) {
-				$model_parts = explode( ',', $assoc_args['model'] );
+				// Models should be in pairs: provider:model,provider:model,...
+				// Convert to array of [provider, model] pairs.
+				$model_preferences = explode( ',', $assoc_args['model'] );
+				foreach ( $model_preferences as $key => $value ) {
+					$value = explode( ':', $value );
 
-				// Models should be in pairs: provider,model,provider,model,...
-				if ( count( $model_parts ) % 2 !== 0 ) {
-					WP_CLI::error( 'Model must be in format "provider,model" pairs (e.g., "openai,gpt-4" or "openai,gpt-4,anthropic,claude-3").' );
+					$entries[ $key ] = $value;
+
+					if ( count( $value ) !== 2 ) {
+						WP_CLI::error( 'Model must be in format "provider:model" pairs (e.g., "openai:gpt-4" or "openai:gpt-4,anthropic:claude-3").' );
+					}
 				}
 
-				// Convert flat array to array of [provider, model] pairs
-				$model_preferences = array();
-				$parts_count       = count( $model_parts );
-				for ( $i = 0; $i < $parts_count; $i += 2 ) {
-					$model_preferences[] = array( $model_parts[ $i ], $model_parts[ $i + 1 ] );
-				}
-
-				// Pass all preferences to using_model_preference using spread operator
 				$builder = $builder->using_model_preference( ...$model_preferences );
 			}
 
-			// Apply temperature if specified
 			if ( isset( $assoc_args['temperature'] ) ) {
-				$temperature = (float) $assoc_args['temperature'];
-				if ( $temperature < 0.0 || $temperature > 2.0 ) {
-					WP_CLI::error( 'Temperature must be between 0.0 and 2.0.' );
-				}
-				$builder = $builder->using_temperature( $temperature );
+				$builder = $builder->using_temperature( (float) $assoc_args['temperature'] );
 			}
 
-			// Apply max tokens if specified
 			if ( isset( $assoc_args['max-tokens'] ) ) {
 				$max_tokens = (int) $assoc_args['max-tokens'];
 				if ( $max_tokens <= 0 ) {
@@ -201,7 +185,6 @@ class AI_Command extends WP_CLI_Command {
 				$builder = $builder->using_max_tokens( $max_tokens );
 			}
 
-			// Apply system instruction if specified
 			if ( isset( $assoc_args['system-instruction'] ) ) {
 				$builder = $builder->using_system_instruction( $assoc_args['system-instruction'] );
 			}
