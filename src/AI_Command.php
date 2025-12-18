@@ -145,7 +145,7 @@ class AI_Command extends WP_CLI_Command {
 	 * @return void
 	 */
 	public function generate( $args, $assoc_args ) {
-		$this->ensure_ai_client_available();
+		$this->initialize_ai_client();
 
 		list( $type, $prompt ) = $args;
 
@@ -240,7 +240,7 @@ class AI_Command extends WP_CLI_Command {
 	 * @return void
 	 */
 	public function check( $args, $assoc_args ) {
-		$this->ensure_ai_client_available();
+		$this->initialize_ai_client();
 
 		list( $prompt ) = $args;
 		$type           = $assoc_args['type'] ?? 'text';
@@ -305,7 +305,7 @@ class AI_Command extends WP_CLI_Command {
 	 * @return void
 	 */
 	public function status( $args, $assoc_args ) {
-		$this->ensure_ai_client_available();
+		$this->initialize_ai_client();
 
 		try {
 			// Create a builder to check capabilities (using constant for consistency)
@@ -361,16 +361,9 @@ class AI_Command extends WP_CLI_Command {
 
 		WP_CLI::debug(
 			sprintf(
-				'Model used: %s (%s)',
+				"Summary:\nModel used: %s (%s)\nToken usage:\nInput tokens: %s\nOutput tokens: %s\nTotal: %s\n",
 				$text->getModelMetadata()->getName(),
-				$text->getProviderMetadata()->getName()
-			),
-			'ai'
-		);
-
-		WP_CLI::debug(
-			sprintf(
-				"Token usage:\nInput tokens: %s\nOutput tokens: %s\nTotal: %s",
+				$text->getProviderMetadata()->getName(),
 				$token_usage[ TokenUsage::KEY_PROMPT_TOKENS ],
 				$token_usage[ TokenUsage::KEY_COMPLETION_TOKENS ],
 				$token_usage[ TokenUsage::KEY_TOTAL_TOKENS ],
@@ -470,9 +463,18 @@ class AI_Command extends WP_CLI_Command {
 	 *
 	 * @return void
 	 */
-	private function ensure_ai_client_available() {
-		if ( ! class_exists( '\WordPress\AI_Client\AI_Client' ) ) {
-			WP_CLI::error( 'WordPress AI Client is not available. Please install wordpress/wp-ai-client.' );
-		}
+	private function initialize_ai_client() {
+		\WordPress\AI_Client\AI_Client::init();
+
+		add_filter(
+			'user_has_cap',
+			static function ( array $allcaps ) {
+				$allcaps[ \WordPress\AI_Client\Capabilities\Capabilities_Manager::PROMPT_AI_CAPABILITY ] = true;
+
+				return $allcaps;
+			}
+		);
+
+		WP_CLI::do_hook( 'ai_client_init' );
 	}
 }
