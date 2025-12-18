@@ -161,3 +161,19 @@ Feature: Generate AI content
       """
       Max tokens must be a positive integer
       """
+
+  Scenario: Generate command validates top-p range
+    When I try `wp ai generate text "Test prompt" --top-p=1.5`
+    Then the return code should be 1
+    And STDERR should contain:
+      """
+      Top-p must be between 0.0 and 1.0
+      """
+
+  Scenario: Generate command validates top-k positive
+    When I try `wp ai generate text "Test prompt" --top-k=-10`
+    Then the return code should be 1
+    And STDERR should contain:
+      """
+      Top-k must be a positive integer
+      """

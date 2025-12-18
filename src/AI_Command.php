@@ -105,6 +105,12 @@ class AI_Command extends WP_CLI_Command {
 	 * [--temperature=<temperature>]
 	 * : Temperature for generation, typically between 0.0 and 1.0. Lower is more deterministic.
 	 *
+	 * [--top-p=<top-p>]
+	 * : Top-p (nucleus sampling) parameter. Value between 0.0 and 1.0.
+	 *
+	 * [--top-k=<top-k>]
+	 * : Top-k sampling parameter. Positive integer.
+	 *
 	 * [--max-tokens=<tokens>]
 	 * : Maximum number of tokens to generate.
 	 *
@@ -130,6 +136,9 @@ class AI_Command extends WP_CLI_Command {
 	 *
 	 *     # Generate text with specific settings
 	 *     $ wp ai generate text "List 3 WordPress features" --temperature=0.1 --max-tokens=100
+	 *
+	 *     # Generate with top-p and top-k sampling
+	 *     $ wp ai generate text "Write a story" --top-p=0.9 --top-k=40
 	 *
 	 *     # Generate with model preferences
 	 *     $ wp ai generate text "Write a haiku" --model=openai,gpt-4,anthropic,claude-3
@@ -175,6 +184,22 @@ class AI_Command extends WP_CLI_Command {
 
 			if ( isset( $assoc_args['temperature'] ) ) {
 				$builder = $builder->using_temperature( (float) $assoc_args['temperature'] );
+			}
+
+			if ( isset( $assoc_args['top-p'] ) ) {
+				$top_p = (float) $assoc_args['top-p'];
+				if ( $top_p < 0.0 || $top_p > 1.0 ) {
+					WP_CLI::error( 'Top-p must be between 0.0 and 1.0.' );
+				}
+				$builder = $builder->using_top_p( $top_p );
+			}
+
+			if ( isset( $assoc_args['top-k'] ) ) {
+				$top_k = (int) $assoc_args['top-k'];
+				if ( $top_k <= 0 ) {
+					WP_CLI::error( 'Top-k must be a positive integer.' );
+				}
+				$builder = $builder->using_top_k( $top_k );
 			}
 
 			if ( isset( $assoc_args['max-tokens'] ) ) {
