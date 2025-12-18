@@ -166,9 +166,7 @@ class Credentials_Command extends WP_CLI_Command {
 		$api_key     = $assoc_args['api-key'];
 		$credentials = $this->get_all_credentials();
 
-		$credentials[ $provider ] = array(
-			'api_key' => $api_key,
-		);
+		$credentials[ $provider ] = $api_key;
 
 		$this->save_all_credentials( $credentials );
 

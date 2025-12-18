@@ -81,9 +81,9 @@ Feature: Manage AI provider credentials
     And I run `wp ai credentials set anthropic --api-key=sk-ant-api-456`
     And I run `wp ai credentials list`
     Then STDOUT should be a table containing rows:
-      | provider  | api_key          |
-      | openai    | sk-*****i123     |
-      | anthropic | sk-********-456  |
+      | provider  | api_key        |
+      | openai    | sk-*****i123   |
+      | anthropic | sk-*******-456 |
 
   Scenario: Update existing credentials
     When I run `wp ai credentials set openai --api-key=old-key-123`
