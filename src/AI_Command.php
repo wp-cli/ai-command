@@ -149,8 +149,8 @@ class AI_Command extends WP_CLI_Command {
 	 *     # Generate image
 	 *     $ wp ai generate image "A minimalist WordPress logo" --output=wp-logo.png
 	 *
-	 * @param array $args       Positional arguments.
-	 * @param array $assoc_args Associative arguments.
+	 * @param array{0: string, 1: string} $args Positional arguments.
+	 * @param array{model: string, provider: string, temperature: float, 'top-p': float, 'top-k': int, 'max-tokens': int, 'system-instruction': string, output: string, format: string} $assoc_args Associative arguments.
 	 * @return void
 	 */
 	public function generate( $args, $assoc_args ) {
@@ -233,7 +233,12 @@ class AI_Command extends WP_CLI_Command {
 	 * : The prompt to check.
 	 *
 	 * [--type=<type>]
-	 * : Type to check. Options: text, image. Default: text
+	 * : Type to check.
+	 * ---
+	 * options:
+	 *   - text
+	 *   - image
+	 * ---
 	 *
 	 * ## EXAMPLES
 	 *
@@ -243,8 +248,8 @@ class AI_Command extends WP_CLI_Command {
 	 *     # Check if image generation is supported
 	 *     $ wp ai check "A sunset" --type=image
 	 *
-	 * @param array $args       Positional arguments.
-	 * @param array $assoc_args Associative arguments.
+	 * @param array{0: string}    $args       Positional arguments.
+	 * @param array{type: string} $assoc_args Associative arguments.
 	 * @return void
 	 */
 	public function check( $args, $assoc_args ) {
@@ -308,8 +313,8 @@ class AI_Command extends WP_CLI_Command {
 	 *     | Image Generation | No        |
 	 *     +------------------+-----------+
 	 *
-	 * @param array $args       Positional arguments.
-	 * @param array $assoc_args Associative arguments.
+	 * @param string[]              $args       Positional arguments. Unused.
+	 * @param array{format: string} $assoc_args Associative arguments.
 	 * @return void
 	 */
 	public function status( $args, $assoc_args ) {
@@ -342,7 +347,7 @@ class AI_Command extends WP_CLI_Command {
 	 * Generates text from the prompt builder.
 	 *
 	 * @param \WordPress\AI_Client\Builders\Prompt_Builder $builder     The prompt builder.
-	 * @param array                                        $assoc_args Associative arguments.
+	 * @param array{format: string}                        $assoc_args Associative arguments.
 	 * @return void
 	 */
 	private function generate_text( $builder, $assoc_args ) {
@@ -383,8 +388,8 @@ class AI_Command extends WP_CLI_Command {
 	/**
 	 * Generates an image from the prompt builder.
 	 *
-	 * @param \WordPress\AI_Client\Builders\Prompt_Builder $builder     The prompt builder.
-	 * @param array                                        $assoc_args Associative arguments.
+	 * @param \WordPress\AI_Client\Builders\Prompt_Builder $builder    The prompt builder.
+	 * @param array{output: string}                        $assoc_args Associative arguments.
 	 * @return void
 	 */
 	private function generate_image( $builder, $assoc_args ) {

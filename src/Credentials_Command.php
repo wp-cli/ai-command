@@ -58,8 +58,8 @@ class Credentials_Command extends WP_CLI_Command {
 	 * @subcommand list
 	 * @when after_wp_load
 	 *
-	 * @param array $args       Indexed array of positional arguments.
-	 * @param array $assoc_args Associative array of associative arguments.
+	 * @param string[]              $args       Positional arguments. Unused.
+	 * @param array{format: string} $assoc_args Associative arguments.
 	 * @return void
 	 */
 	public function list_( $args, $assoc_args ) {
@@ -107,8 +107,8 @@ class Credentials_Command extends WP_CLI_Command {
 	 *
 	 * @when after_wp_load
 	 *
-	 * @param array $args       Indexed array of positional arguments.
-	 * @param array $assoc_args Associative array of associative arguments.
+	 * @param array{0: string}      $args       Positional arguments.
+	 * @param array{format: string} $assoc_args Associative arguments.
 	 * @return void
 	 */
 	public function get( $args, $assoc_args ) {
@@ -156,8 +156,8 @@ class Credentials_Command extends WP_CLI_Command {
 	 *
 	 * @when after_wp_load
 	 *
-	 * @param array $args       Indexed array of positional arguments.
-	 * @param array $assoc_args Associative array of associative arguments.
+	 * @param array{0: string}         $args       Positional arguments.
+	 * @param array{'api-key': string} $assoc_args Associative array of associative arguments.
 	 * @return void
 	 */
 	public function set( $args, $assoc_args ) {
@@ -189,8 +189,8 @@ class Credentials_Command extends WP_CLI_Command {
 	 *
 	 * @when after_wp_load
 	 *
-	 * @param array $args       Indexed array of positional arguments.
-	 * @param array $assoc_args Associative array of associative arguments.
+	 * @param array{0: string} $args       Positional arguments.
+	 * @param array<mixed>     $assoc_args Associative arguments. Unused.
 	 * @return void
 	 */
 	public function delete( $args, $assoc_args ) {
@@ -211,7 +211,7 @@ class Credentials_Command extends WP_CLI_Command {
 	/**
 	 * Gets all credentials from the database.
 	 *
-	 * @return array
+	 * @return array<string, string>
 	 */
 	private function get_all_credentials() {
 		$credentials = get_option( self::OPTION_NAME, array() );
@@ -226,7 +226,7 @@ class Credentials_Command extends WP_CLI_Command {
 	/**
 	 * Saves all credentials to the database.
 	 *
-	 * @param array $credentials The credentials to save.
+	 * @param array<string, string> $credentials The credentials to save.
 	 * @return bool
 	 */
 	private function save_all_credentials( $credentials ) {
