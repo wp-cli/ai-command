@@ -27,7 +27,15 @@
         },
         "bundled": false,
         "commands": [
-            "ai"
+            "ai",
+            "ai credentials",
+            "ai credentials get",
+            "ai credentials set",
+            "ai credentials delete",
+            "ai credentials list",
+            "ai check",
+            "ai generate",
+            "ai status"
         ]
     },
     "autoload": {
