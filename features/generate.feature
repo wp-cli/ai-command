@@ -28,6 +28,10 @@ Feature: Generate AI content
       use WordPress\AiClient\Results\Enums\FinishReasonEnum;
       use WordPress\AI_Client\API_Credentials\API_Credentials_Manager;
 
+      if ( ! interface_exists( 'WordPress\AiClient\Providers\Models\Contracts\ModelInterface' ) ) {
+        return;
+      }
+
       class WP_CLI_Mock_Model implements ModelInterface, TextGenerationModelInterface {
         private $id;
         private $config;
