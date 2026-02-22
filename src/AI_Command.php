@@ -120,7 +120,7 @@ class AI_Command extends WP_CLI_Command {
 		list( $type, $prompt ) = $args;
 
 		try {
-			$builder = AI_Client::prompt( $prompt );
+			$builder = wp_ai_client_prompt( $prompt );
 
 			if ( isset( $assoc_args['provider'] ) ) {
 				$builder = $builder->using_provider( $assoc_args['provider'] );
@@ -218,7 +218,7 @@ class AI_Command extends WP_CLI_Command {
 		$type           = $assoc_args['type'] ?? 'text';
 
 		try {
-			$builder = AI_Client::prompt( $prompt );
+			$builder = wp_ai_client_prompt( $prompt );
 
 			if ( 'text' === $type ) {
 				$supported = $builder->is_supported_for_text_generation();
