@@ -117,12 +117,11 @@ class AI_Command extends WP_CLI_Command {
 	 * @return void
 	 */
 	public function generate( $args, $assoc_args ) {
-		$this->initialize_ai_client();
-
 		list( $type, $prompt ) = $args;
 
 		try {
-			$builder = AI_Client::prompt( $prompt );
+			// @phpstan-ignore function.notFound
+			$builder = wp_ai_client_prompt( $prompt );
 
 			if ( isset( $assoc_args['provider'] ) ) {
 				$builder = $builder->using_provider( $assoc_args['provider'] );
@@ -216,13 +215,12 @@ class AI_Command extends WP_CLI_Command {
 	 * @return void
 	 */
 	public function check( $args, $assoc_args ) {
-		$this->initialize_ai_client();
-
 		list( $prompt ) = $args;
 		$type           = $assoc_args['type'] ?? 'text';
 
 		try {
-			$builder = AI_Client::prompt( $prompt );
+			// @phpstan-ignore function.notFound
+			$builder = wp_ai_client_prompt( $prompt );
 
 			if ( 'text' === $type ) {
 				$supported = $builder->is_supported_for_text_generation();
@@ -281,11 +279,9 @@ class AI_Command extends WP_CLI_Command {
 	 * @return void
 	 */
 	public function status( $args, $assoc_args ) {
-		$this->initialize_ai_client();
-
 		try {
-			// Create a builder to check capabilities (using constant for consistency)
-			$builder = AI_Client::prompt();
+			// @phpstan-ignore function.notFound
+			$builder = wp_ai_client_prompt();
 
 			// Check each capability
 			$capabilities = array(
@@ -312,15 +308,18 @@ class AI_Command extends WP_CLI_Command {
 	 * @param \WordPress\AI_Client\Builders\Prompt_Builder $builder     The prompt builder.
 	 * @param array{format: string}                        $assoc_args Associative arguments.
 	 * @return void
+	 *
+	 * @phpstan-ignore class.notFound
 	 */
 	private function generate_text( $builder, $assoc_args ) {
 		$format = $assoc_args['format'] ?? 'text';
 
-		// Check if supported
+		// @phpstan-ignore class.notFound
 		if ( ! $builder->is_supported_for_text_generation() ) {
 			WP_CLI::error( 'Text generation is not supported. Make sure AI provider credentials are configured.' );
 		}
 
+		// @phpstan-ignore class.notFound
 		$text = $builder->generate_text_result();
 
 		if ( 'json' === $format ) {
@@ -340,8 +339,11 @@ class AI_Command extends WP_CLI_Command {
 				"Summary:\nModel used: %s (%s)\nToken usage:\nInput tokens: %s\nOutput tokens: %s\nTotal: %s\n",
 				$text->getModelMetadata()->getName(),
 				$text->getProviderMetadata()->getName(),
+				// @phpstan-ignore class.notFound
 				$token_usage[ TokenUsage::KEY_PROMPT_TOKENS ],
+				// @phpstan-ignore class.notFound
 				$token_usage[ TokenUsage::KEY_COMPLETION_TOKENS ],
+				// @phpstan-ignore class.notFound
 				$token_usage[ TokenUsage::KEY_TOTAL_TOKENS ],
 			),
 			'ai'
@@ -351,12 +353,14 @@ class AI_Command extends WP_CLI_Command {
 	/**
 	 * Generates an image from the prompt builder.
 	 *
-	 * @param \WordPress\AI_Client\Builders\Prompt_Builder         $builder    The prompt builder.
+	 * @param \WordPress\AI_Client\Builders\Prompt_Builder    $builder    The prompt builder.
 	 * @param array{'destination-file': string, stdout: bool} $assoc_args Associative arguments.
 	 * @return void
+	 *
+	 * @phpstan-ignore class.notFound
 	 */
 	private function generate_image( $builder, $assoc_args ) {
-		// Check if supported
+		// @phpstan-ignore class.notFound
 		if ( ! $builder->is_supported_for_image_generation() ) {
 			WP_CLI::error( 'Image generation is not supported. Make sure AI provider credentials are configured.' );
 		}
@@ -374,6 +378,7 @@ class AI_Command extends WP_CLI_Command {
 			}
 		}
 
+		// @phpstan-ignore class.notFound
 		$image_file = $builder->generate_image();
 
 		if ( isset( $assoc_args['destination-file'] ) ) {
@@ -423,25 +428,5 @@ class AI_Command extends WP_CLI_Command {
 			WP_CLI::success( 'Image generated:' );
 			WP_CLI::line( (string) $image_file->getDataUri() );
 		}
-	}
-
-	/**
-	 * Ensures WordPress AI Client is available.
-	 *
-	 * @return void
-	 */
-	private function initialize_ai_client() {
-		\WordPress\AI_Client\AI_Client::init();
-
-		add_filter(
-			'user_has_cap',
-			static function ( array $allcaps ) {
-				$allcaps[ \WordPress\AI_Client\Capabilities\Capabilities_Manager::PROMPT_AI_CAPABILITY ] = true;
-
-				return $allcaps;
-			}
-		);
-
-		WP_CLI::do_hook( 'ai_client_init' );
 	}
 }
