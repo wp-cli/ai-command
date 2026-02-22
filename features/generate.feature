@@ -150,10 +150,23 @@ Feature: Generate AI content
       );
       """
 
+  @less-than-wp-7.0
+  Scenario: Command not available on WP < 7.0
+    Given a WP install
+
+    When I try `wp ai generate text "Test prompt" --model=invalidformat`
+    Then STDERR should contain:
+      """
+      Requires WordPress 7.0 or greater.
+      """
+    And the return code should be 1
+
+  @require-wp-7.0
   Scenario: Generate command validates model format
     When I try `wp ai generate text "Test prompt" --model=invalidformat`
     Then the return code should be 1
 
+  @require-wp-7.0
   Scenario: Generate command validates max-tokens
     When I try `wp ai generate text "Test prompt" --max-tokens=-5`
     Then the return code should be 1
@@ -162,6 +175,7 @@ Feature: Generate AI content
       Max tokens must be a positive integer
       """
 
+  @require-wp-7.0
   Scenario: Generate command validates top-p range
     When I try `wp ai generate text "Test prompt" --top-p=1.5`
     Then the return code should be 1
@@ -170,6 +184,7 @@ Feature: Generate AI content
       Top-p must be between 0.0 and 1.0
       """
 
+  @require-wp-7.0
   Scenario: Generate command validates top-k positive
     When I try `wp ai generate text "Test prompt" --top-k=-10`
     Then the return code should be 1

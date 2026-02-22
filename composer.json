@@ -6,10 +6,10 @@
     "license": "MIT",
     "authors": [],
     "require": {
-        "wordpress/wp-ai-client": "^0.3.0",
-        "wp-cli/wp-cli": "^2.12"
+        "wp-cli/wp-cli": "^2.13"
     },
     "require-dev": {
+        "wordpress/wp-ai-client": "^0.3.0",
         "wp-cli/wp-cli-tests": "^5"
     },
     "config": {
