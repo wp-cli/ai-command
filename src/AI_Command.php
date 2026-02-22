@@ -120,6 +120,7 @@ class AI_Command extends WP_CLI_Command {
 		list( $type, $prompt ) = $args;
 
 		try {
+			// @phpstan-ignore function.notFound
 			$builder = wp_ai_client_prompt( $prompt );
 
 			if ( isset( $assoc_args['provider'] ) ) {
@@ -218,6 +219,7 @@ class AI_Command extends WP_CLI_Command {
 		$type           = $assoc_args['type'] ?? 'text';
 
 		try {
+			// @phpstan-ignore function.notFound
 			$builder = wp_ai_client_prompt( $prompt );
 
 			if ( 'text' === $type ) {
@@ -278,7 +280,7 @@ class AI_Command extends WP_CLI_Command {
 	 */
 	public function status( $args, $assoc_args ) {
 		try {
-			// Create a builder to check capabilities (using constant for consistency)
+			// @phpstan-ignore function.notFound
 			$builder = wp_ai_client_prompt();
 
 			// Check each capability
@@ -306,15 +308,18 @@ class AI_Command extends WP_CLI_Command {
 	 * @param \WordPress\AI_Client\Builders\Prompt_Builder $builder     The prompt builder.
 	 * @param array{format: string}                        $assoc_args Associative arguments.
 	 * @return void
+	 *
+	 * @phpstan-ignore class.notFound
 	 */
 	private function generate_text( $builder, $assoc_args ) {
 		$format = $assoc_args['format'] ?? 'text';
 
-		// Check if supported
+		// @phpstan-ignore class.notFound
 		if ( ! $builder->is_supported_for_text_generation() ) {
 			WP_CLI::error( 'Text generation is not supported. Make sure AI provider credentials are configured.' );
 		}
 
+		// @phpstan-ignore class.notFound
 		$text = $builder->generate_text_result();
 
 		if ( 'json' === $format ) {
@@ -334,8 +339,11 @@ class AI_Command extends WP_CLI_Command {
 				"Summary:\nModel used: %s (%s)\nToken usage:\nInput tokens: %s\nOutput tokens: %s\nTotal: %s\n",
 				$text->getModelMetadata()->getName(),
 				$text->getProviderMetadata()->getName(),
+				// @phpstan-ignore class.notFound
 				$token_usage[ TokenUsage::KEY_PROMPT_TOKENS ],
+				// @phpstan-ignore class.notFound
 				$token_usage[ TokenUsage::KEY_COMPLETION_TOKENS ],
+				// @phpstan-ignore class.notFound
 				$token_usage[ TokenUsage::KEY_TOTAL_TOKENS ],
 			),
 			'ai'
@@ -345,12 +353,14 @@ class AI_Command extends WP_CLI_Command {
 	/**
 	 * Generates an image from the prompt builder.
 	 *
-	 * @param \WordPress\AI_Client\Builders\Prompt_Builder         $builder    The prompt builder.
+	 * @param \WordPress\AI_Client\Builders\Prompt_Builder    $builder    The prompt builder.
 	 * @param array{'destination-file': string, stdout: bool} $assoc_args Associative arguments.
 	 * @return void
+	 *
+	 * @phpstan-ignore class.notFound
 	 */
 	private function generate_image( $builder, $assoc_args ) {
-		// Check if supported
+		// @phpstan-ignore class.notFound
 		if ( ! $builder->is_supported_for_image_generation() ) {
 			WP_CLI::error( 'Image generation is not supported. Make sure AI provider credentials are configured.' );
 		}
@@ -368,6 +378,7 @@ class AI_Command extends WP_CLI_Command {
 			}
 		}
 
+		// @phpstan-ignore class.notFound
 		$image_file = $builder->generate_image();
 
 		if ( isset( $assoc_args['destination-file'] ) ) {
