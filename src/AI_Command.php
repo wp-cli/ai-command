@@ -117,8 +117,6 @@ class AI_Command extends WP_CLI_Command {
 	 * @return void
 	 */
 	public function generate( $args, $assoc_args ) {
-		$this->initialize_ai_client();
-
 		list( $type, $prompt ) = $args;
 
 		try {
@@ -216,8 +214,6 @@ class AI_Command extends WP_CLI_Command {
 	 * @return void
 	 */
 	public function check( $args, $assoc_args ) {
-		$this->initialize_ai_client();
-
 		list( $prompt ) = $args;
 		$type           = $assoc_args['type'] ?? 'text';
 
@@ -281,11 +277,9 @@ class AI_Command extends WP_CLI_Command {
 	 * @return void
 	 */
 	public function status( $args, $assoc_args ) {
-		$this->initialize_ai_client();
-
 		try {
 			// Create a builder to check capabilities (using constant for consistency)
-			$builder = AI_Client::prompt();
+			$builder = wp_ai_client_prompt();
 
 			// Check each capability
 			$capabilities = array(
@@ -423,25 +417,5 @@ class AI_Command extends WP_CLI_Command {
 			WP_CLI::success( 'Image generated:' );
 			WP_CLI::line( (string) $image_file->getDataUri() );
 		}
-	}
-
-	/**
-	 * Ensures WordPress AI Client is available.
-	 *
-	 * @return void
-	 */
-	private function initialize_ai_client() {
-		\WordPress\AI_Client\AI_Client::init();
-
-		add_filter(
-			'user_has_cap',
-			static function ( array $allcaps ) {
-				$allcaps[ \WordPress\AI_Client\Capabilities\Capabilities_Manager::PROMPT_AI_CAPABILITY ] = true;
-
-				return $allcaps;
-			}
-		);
-
-		WP_CLI::do_hook( 'ai_client_init' );
 	}
 }
