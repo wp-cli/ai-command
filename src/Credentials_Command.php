@@ -79,7 +79,7 @@ class Credentials_Command extends WP_CLI_Command {
 		foreach ( $credentials as $provider => $api_key ) {
 			$items[] = array(
 				'provider' => $provider,
-				'api_key'  => $this->mask_api_key( $api_key ?? '' ),
+				'api_key'  => $api_key,
 			);
 		}
 
@@ -119,15 +119,17 @@ class Credentials_Command extends WP_CLI_Command {
 	public function get( $args, $assoc_args ) {
 		list( $provider ) = $args;
 
-		$credentials = $this->get_all_credentials();
+		$option_name = self::OPTION_PREFIX . $provider . self::OPTION_SUFFIX;
+		$raw_key     = get_option( $option_name, '' );
+		$api_key     = is_string( $raw_key ) ? $raw_key : '';
 
-		if ( ! isset( $credentials[ $provider ] ) ) {
+		if ( '' === $api_key ) {
 			WP_CLI::error( sprintf( 'Credentials for provider "%s" not found.', $provider ) );
 		}
 
 		$data = array(
 			'provider' => $provider,
-			'api_key'  => $this->mask_api_key( $credentials[ $provider ] ?? '' ),
+			'api_key'  => $api_key,
 		);
 
 		$format = $assoc_args['format'] ?? 'json';
@@ -201,13 +203,15 @@ class Credentials_Command extends WP_CLI_Command {
 	public function delete( $args, $assoc_args ) {
 		list( $provider ) = $args;
 
-		$credentials = $this->get_all_credentials();
+		$option_name = self::OPTION_PREFIX . $provider . self::OPTION_SUFFIX;
+		$raw_key     = get_option( $option_name, '' );
+		$api_key     = is_string( $raw_key ) ? $raw_key : '';
 
-		if ( ! isset( $credentials[ $provider ] ) ) {
+		if ( '' === $api_key ) {
 			WP_CLI::error( sprintf( 'Credentials for provider "%s" not found.', $provider ) );
 		}
 
-		delete_option( self::OPTION_PREFIX . $provider . self::OPTION_SUFFIX );
+		delete_option( $option_name );
 
 		WP_CLI::success( sprintf( 'Credentials for provider "%s" have been deleted.', $provider ) );
 	}
@@ -218,60 +222,30 @@ class Credentials_Command extends WP_CLI_Command {
 	 * @return array<string, string>
 	 */
 	private function get_all_credentials() {
-		global $wpdb;
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-		$results = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT option_name, option_value FROM {$wpdb->options} WHERE option_name LIKE %s",
-				$wpdb->esc_like( self::OPTION_PREFIX ) . '%' . $wpdb->esc_like( self::OPTION_SUFFIX )
-			),
-			ARRAY_A
-		);
-
-		if ( ! is_array( $results ) ) {
+		if ( ! function_exists( '_wp_connectors_get_connector_settings' ) ) {
 			return array();
 		}
 
-		$credentials   = array();
-		$prefix_length = strlen( self::OPTION_PREFIX );
-		$suffix_length = strlen( self::OPTION_SUFFIX );
+		$credentials = array();
 
-		foreach ( $results as $row ) {
-			if ( ! is_array( $row ) ) {
+		foreach ( _wp_connectors_get_connector_settings() as $connector_id => $connector_data ) {
+			if ( ! isset( $connector_data['authentication'] ) ) {
 				continue;
 			}
-			/** @var array<string, string> $row */
-			$option_name = $row['option_name'];
-			if ( strlen( $option_name ) <= $prefix_length + $suffix_length ) {
+			$auth = $connector_data['authentication'];
+			if ( 'api_key' !== $auth['method'] || empty( $auth['setting_name'] ) ) {
 				continue;
 			}
-			$provider                 = substr( $option_name, $prefix_length, -$suffix_length );
-			$credentials[ $provider ] = $row['option_value'];
+
+			$raw   = get_option( $auth['setting_name'], '' );
+			$value = is_string( $raw ) ? $raw : '';
+			if ( '' !== $value ) {
+				$credentials[ $connector_id ] = $value;
+			}
 		}
 
 		ksort( $credentials );
 
 		return $credentials;
-	}
-
-	/**
-	 * Masks an API key for display purposes.
-	 *
-	 * Uses the same logic as WordPress core's `_wp_connectors_mask_api_key()`.
-	 *
-	 * @param string $api_key The API key to mask.
-	 * @return string
-	 */
-	private function mask_api_key( $api_key ) {
-		if ( function_exists( '_wp_connectors_mask_api_key' ) ) {
-			return _wp_connectors_mask_api_key( $api_key );
-		}
-
-		if ( strlen( $api_key ) <= 4 ) {
-			return $api_key;
-		}
-
-		return str_repeat( "\u{2022}", min( strlen( $api_key ) - 4, 16 ) ) . substr( $api_key, -4 );
 	}
 }
