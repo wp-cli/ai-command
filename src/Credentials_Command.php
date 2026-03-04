@@ -25,9 +25,14 @@ use WP_CLI_Command;
 class Credentials_Command extends WP_CLI_Command {
 
 	/**
-	 * The option name where credentials are stored.
+	 * The option name prefix where credentials are stored.
 	 */
-	const OPTION_NAME = 'wp_ai_client_provider_credentials';
+	const OPTION_PREFIX = 'connectors_ai_';
+
+	/**
+	 * The option name suffix where credentials are stored.
+	 */
+	const OPTION_SUFFIX = '_api_key';
 
 	/**
 	 * Lists all stored AI provider credentials.
@@ -164,11 +169,11 @@ class Credentials_Command extends WP_CLI_Command {
 		list( $provider ) = $args;
 
 		$api_key     = $assoc_args['api-key'];
-		$credentials = $this->get_all_credentials();
+		$option_name = self::OPTION_PREFIX . $provider . self::OPTION_SUFFIX;
 
-		$credentials[ $provider ] = $api_key;
-
-		$this->save_all_credentials( $credentials );
+		// Remove any sanitize callback to bypass provider-side validation (e.g., live API checks).
+		remove_all_filters( "sanitize_option_{$option_name}" );
+		update_option( $option_name, $api_key, false );
 
 		WP_CLI::success( sprintf( 'Credentials for provider "%s" have been saved.', $provider ) );
 	}
@@ -202,8 +207,7 @@ class Credentials_Command extends WP_CLI_Command {
 			WP_CLI::error( sprintf( 'Credentials for provider "%s" not found.', $provider ) );
 		}
 
-		unset( $credentials[ $provider ] );
-		$this->save_all_credentials( $credentials );
+		delete_option( self::OPTION_PREFIX . $provider . self::OPTION_SUFFIX );
 
 		WP_CLI::success( sprintf( 'Credentials for provider "%s" have been deleted.', $provider ) );
 	}
@@ -214,51 +218,60 @@ class Credentials_Command extends WP_CLI_Command {
 	 * @return array<string, string>
 	 */
 	private function get_all_credentials() {
-		$credentials = get_option( self::OPTION_NAME, array() );
+		global $wpdb;
 
-		if ( ! is_array( $credentials ) ) {
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT option_name, option_value FROM {$wpdb->options} WHERE option_name LIKE %s",
+				$wpdb->esc_like( self::OPTION_PREFIX ) . '%' . $wpdb->esc_like( self::OPTION_SUFFIX )
+			),
+			ARRAY_A
+		);
+
+		if ( ! is_array( $results ) ) {
 			return array();
 		}
 
-		/**
-		 * @var array<string, string> $credentials
-		 */
+		$credentials   = array();
+		$prefix_length = strlen( self::OPTION_PREFIX );
+		$suffix_length = strlen( self::OPTION_SUFFIX );
+
+		foreach ( $results as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+			/** @var array<string, string> $row */
+			$option_name = $row['option_name'];
+			if ( strlen( $option_name ) <= $prefix_length + $suffix_length ) {
+				continue;
+			}
+			$provider                 = substr( $option_name, $prefix_length, -$suffix_length );
+			$credentials[ $provider ] = $row['option_value'];
+		}
+
+		ksort( $credentials );
 
 		return $credentials;
 	}
 
 	/**
-	 * Saves all credentials to the database.
-	 *
-	 * @param array<string, string> $credentials The credentials to save.
-	 * @return bool
-	 */
-	private function save_all_credentials( $credentials ) {
-		if ( empty( $credentials ) ) {
-			return delete_option( self::OPTION_NAME );
-		}
-
-		return update_option( self::OPTION_NAME, $credentials, false );
-	}
-
-	/**
 	 * Masks an API key for display purposes.
+	 *
+	 * Uses the same logic as WordPress core's `_wp_connectors_mask_api_key()`.
 	 *
 	 * @param string $api_key The API key to mask.
 	 * @return string
 	 */
 	private function mask_api_key( $api_key ) {
-		if ( empty( $api_key ) ) {
-			return '';
+		if ( function_exists( '_wp_connectors_mask_api_key' ) ) {
+			return _wp_connectors_mask_api_key( $api_key );
 		}
 
-		$length = strlen( $api_key );
-
-		if ( $length <= 8 ) {
-			return str_repeat( '*', $length );
+		if ( strlen( $api_key ) <= 4 ) {
+			return $api_key;
 		}
 
-		// Show first 3 and last 4 characters
-		return substr( $api_key, 0, 3 ) . str_repeat( '*', min( 10, $length - 7 ) ) . substr( $api_key, -4 );
+		return str_repeat( "\u{2022}", min( strlen( $api_key ) - 4, 16 ) ) . substr( $api_key, -4 );
 	}
 }
