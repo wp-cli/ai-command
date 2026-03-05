@@ -22,4 +22,4 @@ $wpcli_ai_before_invoke = static function () {
 };
 
 WP_CLI::add_command( 'ai', AI_Command::class, [ 'before_invoke' => $wpcli_ai_before_invoke ] );
-WP_CLI::add_command( 'ai credentials', Credentials_Command::class, [ 'before_invoke' => $wpcli_ai_before_invoke ] );
+WP_CLI::add_command( 'connectors', Connectors_Command::class, [ 'before_invoke' => $wpcli_ai_before_invoke ] );
