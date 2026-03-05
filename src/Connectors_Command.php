@@ -33,6 +33,16 @@ class Connectors_Command extends WP_CLI_Command {
 	 *
 	 * ## OPTIONS
 	 *
+	 * [--status=<status>]
+	 * : Filter connectors by status.
+	 * ---
+	 * options:
+	 *   - connected
+	 *   - active
+	 *   - installed
+	 *   - not installed
+	 * ---
+	 *
 	 * [--fields=<fields>]
 	 * : Comma-separated list of fields to include in the output.
 	 *
@@ -59,11 +69,14 @@ class Connectors_Command extends WP_CLI_Command {
 	 *     | OpenAI    | Text and image generation with GPT and Dall-E | connected     |
 	 *     +-----------+-----------------------------------------------+---------------+
 	 *
+	 *     # List only connected connectors
+	 *     $ wp connectors list --status=connected
+	 *
 	 * @subcommand list
 	 * @when after_wp_load
 	 *
-	 * @param string[]                              $args       Positional arguments. Unused.
-	 * @param array{fields: string, format: string} $assoc_args Associative arguments.
+	 * @param string[]                                             $args       Positional arguments. Unused.
+	 * @param array{status: string, fields: string, format: string} $assoc_args Associative arguments.
 	 * @return void
 	 */
 	public function list_( $args, $assoc_args ) {
@@ -75,16 +88,22 @@ class Connectors_Command extends WP_CLI_Command {
 
 		$items = array();
 		foreach ( $connectors as $connector_id => $connector ) {
-			$plugin_slug = isset( $connector['plugin']['slug'] ) ? (string) $connector['plugin']['slug'] : '';
+			if ( ! is_array( $connector ) ) {
+				continue;
+			}
 
-			$items[] = array(
-				'name'            => $connector['name'],
-				'description'     => $connector['description'],
-				'status'          => $this->get_connector_status( $connector_id, $connector ),
-				'type'            => $connector['type'],
-				'auth_method'     => $connector['authentication']['method'],
-				'credentials_url' => $connector['authentication']['credentials_url'] ?? '',
-				'plugin_slug'     => $plugin_slug,
+			$items[] = $this->build_connector_item( $connector_id, $connector );
+		}
+
+		if ( isset( $assoc_args['status'] ) ) {
+			$status_filter = $assoc_args['status'];
+			$items         = array_values(
+				array_filter(
+					$items,
+					static function ( array $item ) use ( $status_filter ) {
+						return $item['status'] === $status_filter;
+					}
+				)
 			);
 		}
 
@@ -147,38 +166,53 @@ class Connectors_Command extends WP_CLI_Command {
 
 		$connectors = _wp_connectors_get_connector_settings();
 
-		if ( ! isset( $connectors[ $connector_id ] ) ) {
+		if ( ! isset( $connectors[ $connector_id ] ) || ! is_array( $connectors[ $connector_id ] ) ) {
 			WP_CLI::error( sprintf( 'Connector "%s" not found.', $connector_id ) );
 		}
 
-		$connector   = $connectors[ $connector_id ];
-		$auth        = $connector['authentication'];
-		$plugin_slug = isset( $connector['plugin']['slug'] ) ? (string) $connector['plugin']['slug'] : '';
+		$connector = $connectors[ $connector_id ];
+		$item      = $this->build_connector_item( $connector_id, $connector );
+
+		// Retrieve and append the (possibly masked) API key.
+		$auth    = is_array( $connector['authentication'] ) ? $connector['authentication'] : array();
+		$method  = isset( $auth['method'] ) && is_string( $auth['method'] ) ? $auth['method'] : '';
+		$setting = isset( $auth['setting_name'] ) && is_string( $auth['setting_name'] ) ? $auth['setting_name'] : '';
 
 		$api_key = '';
-		if ( 'api_key' === $auth['method'] && ! empty( $auth['setting_name'] ) ) {
+		if ( 'api_key' === $method && '' !== $setting ) {
 			// The option_* filter registered by WP core masks the value automatically.
-			$raw     = get_option( $auth['setting_name'], '' );
+			$raw     = get_option( $setting, '' );
 			$api_key = is_string( $raw ) ? $raw : '';
 		}
 
-		$item = array(
-			'name'            => $connector['name'],
-			'description'     => $connector['description'],
+		$item['api_key'] = $api_key;
+
+		$default_fields = array( 'name', 'description', 'status', 'credentials_url', 'api_key' );
+		$formatter      = new \WP_CLI\Formatter( $assoc_args, $default_fields );
+		$formatter->display_item( $item );
+	}
+
+	/**
+	 * Builds a flat item array from a connector settings array.
+	 *
+	 * @param string  $connector_id The connector ID.
+	 * @param mixed[] $connector    Connector settings from _wp_connectors_get_connector_settings().
+	 * @return array{name: string, description: string, status: string, type: string, auth_method: string, credentials_url: string, plugin_slug: string}
+	 */
+	private function build_connector_item( string $connector_id, array $connector ): array {
+		$auth        = is_array( $connector['authentication'] ) ? $connector['authentication'] : array();
+		$plugin      = isset( $connector['plugin'] ) && is_array( $connector['plugin'] ) ? $connector['plugin'] : array();
+		$plugin_slug = isset( $plugin['slug'] ) && is_string( $plugin['slug'] ) ? $plugin['slug'] : '';
+
+		return array(
+			'name'            => $this->scalar_to_string( $connector['name'] ?? '' ),
+			'description'     => $this->scalar_to_string( $connector['description'] ?? '' ),
 			'status'          => $this->get_connector_status( $connector_id, $connector ),
-			'credentials_url' => $auth['credentials_url'] ?? '',
-			'api_key'         => $api_key,
-			'type'            => $connector['type'],
-			'auth_method'     => $auth['method'],
+			'type'            => $this->scalar_to_string( $connector['type'] ?? '' ),
+			'auth_method'     => isset( $auth['method'] ) && is_string( $auth['method'] ) ? $auth['method'] : '',
+			'credentials_url' => isset( $auth['credentials_url'] ) && is_string( $auth['credentials_url'] ) ? $auth['credentials_url'] : '',
 			'plugin_slug'     => $plugin_slug,
 		);
-
-		$format = $assoc_args['format'] ?? 'table';
-		$fields = isset( $assoc_args['fields'] )
-			? explode( ',', $assoc_args['fields'] )
-			: array_keys( $item );
-
-		WP_CLI\Utils\format_items( $format, array( $item ), $fields );
 	}
 
 	/**
@@ -218,6 +252,16 @@ class Connectors_Command extends WP_CLI_Command {
 		}
 
 		return 'not installed';
+	}
+
+	/**
+	 * Casts a scalar value to string, returning an empty string for non-scalars.
+	 *
+	 * @param mixed $value The value to cast.
+	 * @return string
+	 */
+	private function scalar_to_string( $value ): string {
+		return is_scalar( $value ) ? (string) $value : '';
 	}
 
 	/**
