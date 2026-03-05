@@ -146,8 +146,9 @@ Feature: List and get AI connectors
   @require-wp-7.0
   Scenario: Install OpenAI provider plugin and verify active status
     Given these installed and active plugins:
-      | plugin                 |
-      | ai-provider-for-openai |
+      """
+      ai-provider-for-openai
+      """
 
     When I run `wp connectors list --format=json`
     Then STDOUT should contain:
@@ -168,8 +169,9 @@ Feature: List and get AI connectors
   @require-wp-7.0
   Scenario: Filter by active status returns only active connectors
     Given these installed and active plugins:
-      | plugin                 |
-      | ai-provider-for-openai |
+      """
+      ai-provider-for-openai
+      """
 
     When I run `wp connectors list --status=active --format=json`
     Then STDOUT should contain:
