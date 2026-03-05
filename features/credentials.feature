@@ -51,7 +51,7 @@ Feature: Manage AI provider credentials
       """
     And STDOUT should contain:
       """
-      "api_key":"••••••••••••••-123"
+      "api_key":"\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022-123"
       """
 
   @require-wp-7.0
@@ -120,5 +120,5 @@ Feature: Manage AI provider credentials
     When I run `wp ai credentials get openai --format=json`
     Then STDOUT should contain:
       """
-      "api_key":"•••••••-456"
+      "api_key":"\u2022\u2022\u2022\u2022\u2022\u2022\u2022-456"
       """
