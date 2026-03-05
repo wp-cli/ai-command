@@ -26,7 +26,7 @@ class Connectors_Command extends WP_CLI_Command {
 	 * [--fields=<fields>]
 	 * : Comma-separated list of fields to include in the output.
 	 * ---
-	 * default: name,type,auth_method,plugin_slug,installed,active
+	 * default: name,description,status
 	 * ---
 	 *
 	 * [--format=<format>]
@@ -44,11 +44,13 @@ class Connectors_Command extends WP_CLI_Command {
 	 *
 	 *     # List all connectors
 	 *     $ wp connectors list
-	 *     +----------+-------------+-------------+------------------------+-----------+--------+
-	 *     | name     | type        | auth_method | plugin_slug            | installed | active |
-	 *     +----------+-------------+-------------+------------------------+-----------+--------+
-	 *     | Anthropic | ai_provider | api_key    | ai-provider-for-anthropic | No     | No     |
-	 *     +----------+-------------+-------------+------------------------+-----------+--------+
+	 *     +-----------+-----------------------------------------------+---------------+
+	 *     | name      | description                                   | status        |
+	 *     +-----------+-----------------------------------------------+---------------+
+	 *     | Anthropic | Text generation with Claude.                  | not installed |
+	 *     | Google    | Text and image generation with Gemini...      | not installed |
+	 *     | OpenAI    | Text and image generation with GPT and Dall-E | connected     |
+	 *     +-----------+-----------------------------------------------+---------------+
 	 *
 	 * @subcommand list
 	 * @when after_wp_load
@@ -67,30 +69,22 @@ class Connectors_Command extends WP_CLI_Command {
 		$items = array();
 		foreach ( $connectors as $connector_id => $connector ) {
 			$plugin_slug = isset( $connector['plugin']['slug'] ) ? (string) $connector['plugin']['slug'] : '';
-			$installed   = '';
-			$active      = '';
-
-			if ( $plugin_slug ) {
-				$installed = $this->is_plugin_installed( $plugin_slug ) ? 'Yes' : 'No';
-				$active    = $this->is_plugin_active( $plugin_slug ) ? 'Yes' : 'No';
-			}
 
 			$items[] = array(
 				'name'            => $connector['name'],
 				'description'     => $connector['description'],
+				'status'          => $this->get_connector_status( $connector_id, $connector ),
 				'type'            => $connector['type'],
 				'auth_method'     => $connector['authentication']['method'],
 				'credentials_url' => $connector['authentication']['credentials_url'] ?? '',
 				'plugin_slug'     => $plugin_slug,
-				'installed'       => $installed,
-				'active'          => $active,
 			);
 		}
 
 		$format = $assoc_args['format'] ?? 'table';
 		$fields = isset( $assoc_args['fields'] )
 			? explode( ',', $assoc_args['fields'] )
-			: array( 'name', 'type', 'auth_method', 'plugin_slug', 'installed', 'active' );
+			: array( 'name', 'description', 'status' );
 
 		WP_CLI\Utils\format_items( $format, $items, $fields );
 	}
@@ -105,6 +99,9 @@ class Connectors_Command extends WP_CLI_Command {
 	 *
 	 * [--fields=<fields>]
 	 * : Comma-separated list of fields to include in the output.
+	 * ---
+	 * default: name,description,status,credentials_url,api_key
+	 * ---
 	 *
 	 * [--format=<format>]
 	 * : Render output in a particular format.
@@ -121,12 +118,15 @@ class Connectors_Command extends WP_CLI_Command {
 	 *
 	 *     # Get details for the OpenAI connector
 	 *     $ wp connectors get openai
-	 *     +------------------+-------------------------------+
-	 *     | Field            | Value                         |
-	 *     +------------------+-------------------------------+
-	 *     | name             | OpenAI                        |
-	 *     | description      | Text and image generation ... |
-	 *     +------------------+-------------------------------+
+	 *     +-----------------+-----------------------------------------------+
+	 *     | Field           | Value                                         |
+	 *     +-----------------+-----------------------------------------------+
+	 *     | name            | OpenAI                                        |
+	 *     | description     | Text and image generation with GPT and Dall-E |
+	 *     | status          | connected                                     |
+	 *     | credentials_url | https://platform.openai.com/api-keys          |
+	 *     | api_key         | ••••••••••••6789                              |
+	 *     +-----------------+-----------------------------------------------+
 	 *
 	 * @when after_wp_load
 	 *
@@ -158,31 +158,64 @@ class Connectors_Command extends WP_CLI_Command {
 			$api_key = is_string( $raw ) ? $raw : '';
 		}
 
-		$installed = '';
-		$active    = '';
-		if ( $plugin_slug ) {
-			$installed = $this->is_plugin_installed( $plugin_slug ) ? 'Yes' : 'No';
-			$active    = $this->is_plugin_active( $plugin_slug ) ? 'Yes' : 'No';
-		}
-
 		$item = array(
 			'name'            => $connector['name'],
 			'description'     => $connector['description'],
+			'status'          => $this->get_connector_status( $connector_id, $connector ),
+			'credentials_url' => $auth['credentials_url'] ?? '',
+			'api_key'         => $api_key,
 			'type'            => $connector['type'],
 			'auth_method'     => $auth['method'],
-			'credentials_url' => $auth['credentials_url'] ?? '',
 			'plugin_slug'     => $plugin_slug,
-			'installed'       => $installed,
-			'active'          => $active,
-			'api_key'         => $api_key,
 		);
+
+		$default_fields = array( 'name', 'description', 'status', 'credentials_url', 'api_key' );
 
 		$format = $assoc_args['format'] ?? 'table';
 		$fields = isset( $assoc_args['fields'] )
 			? explode( ',', $assoc_args['fields'] )
-			: array_keys( $item );
+			: $default_fields;
 
 		WP_CLI\Utils\format_items( $format, array( $item ), $fields );
+	}
+
+	/**
+	 * Returns the status of a connector.
+	 *
+	 * Possible values: 'connected', 'active', 'installed', 'not installed'.
+	 *
+	 * @param string  $connector_id The connector ID.
+	 * @param mixed[] $connector    Connector settings from _wp_connectors_get_connector_settings().
+	 * @return string
+	 */
+	private function get_connector_status( string $connector_id, array $connector ): string {
+		$auth        = is_array( $connector['authentication'] ) ? $connector['authentication'] : array();
+		$plugin      = isset( $connector['plugin'] ) && is_array( $connector['plugin'] ) ? $connector['plugin'] : array();
+		$plugin_slug = isset( $plugin['slug'] ) && is_string( $plugin['slug'] ) ? $plugin['slug'] : '';
+		$method      = isset( $auth['method'] ) && is_string( $auth['method'] ) ? $auth['method'] : '';
+		$setting     = isset( $auth['setting_name'] ) && is_string( $auth['setting_name'] ) ? $auth['setting_name'] : '';
+
+		if ( 'api_key' === $method && '' !== $setting ) {
+			// The option_* filter registered by WP core masks the value automatically.
+			$raw = get_option( $setting, '' );
+			if ( is_string( $raw ) && '' !== $raw ) {
+				return 'connected';
+			}
+		}
+
+		if ( ! $plugin_slug ) {
+			return 'active';
+		}
+
+		if ( $this->is_plugin_active( $plugin_slug ) ) {
+			return 'active';
+		}
+
+		if ( $this->is_plugin_installed( $plugin_slug ) ) {
+			return 'installed';
+		}
+
+		return 'not installed';
 	}
 
 	/**
