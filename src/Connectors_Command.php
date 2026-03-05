@@ -17,6 +17,16 @@ use WP_CLI_Command;
  *     $ wp connectors get openai
  */
 class Connectors_Command extends WP_CLI_Command {
+	/**
+	 * Default fields for list output.
+	 *
+	 * @var string[]
+	 */
+	protected $default_fields = [
+		'name',
+		'description',
+		'status',
+	];
 
 	/**
 	 * Lists all available AI connectors.
@@ -25,9 +35,6 @@ class Connectors_Command extends WP_CLI_Command {
 	 *
 	 * [--fields=<fields>]
 	 * : Comma-separated list of fields to include in the output.
-	 * ---
-	 * default: name,description,status
-	 * ---
 	 *
 	 * [--format=<format>]
 	 * : Render output in a particular format.
@@ -84,7 +91,7 @@ class Connectors_Command extends WP_CLI_Command {
 		$format = $assoc_args['format'] ?? 'table';
 		$fields = isset( $assoc_args['fields'] )
 			? explode( ',', $assoc_args['fields'] )
-			: array( 'name', 'description', 'status' );
+			: $this->default_fields;
 
 		WP_CLI\Utils\format_items( $format, $items, $fields );
 	}
@@ -99,9 +106,6 @@ class Connectors_Command extends WP_CLI_Command {
 	 *
 	 * [--fields=<fields>]
 	 * : Comma-separated list of fields to include in the output.
-	 * ---
-	 * default: name,description,status,credentials_url,api_key
-	 * ---
 	 *
 	 * [--format=<format>]
 	 * : Render output in a particular format.
@@ -169,12 +173,10 @@ class Connectors_Command extends WP_CLI_Command {
 			'plugin_slug'     => $plugin_slug,
 		);
 
-		$default_fields = array( 'name', 'description', 'status', 'credentials_url', 'api_key' );
-
 		$format = $assoc_args['format'] ?? 'table';
 		$fields = isset( $assoc_args['fields'] )
 			? explode( ',', $assoc_args['fields'] )
-			: $default_fields;
+			: array_keys( $item );
 
 		WP_CLI\Utils\format_items( $format, array( $item ), $fields );
 	}
