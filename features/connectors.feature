@@ -132,8 +132,9 @@ Feature: List and get AI connectors
   @require-wp-7.0
   Scenario: Connected status when plugin is active and API key is configured
     Given these installed and active plugins:
-      | plugin                 |
-      | ai-provider-for-openai |
+      """
+      ai-provider-for-openai
+      """
 
     When I run `wp ai credentials set openai --api-key=sk-test123456789`
     And I run `wp connectors list --format=json`
@@ -145,8 +146,9 @@ Feature: List and get AI connectors
   @require-wp-7.0
   Scenario: Community plugin shows up in connectors list
     Given these installed and active plugins:
-      | plugin                              |
-      | ai-provider-for-azure-openai        |
+      """
+      ai-provider-for-azure-openai
+      """
 
     When I run `wp connectors list --format=json`
     Then STDOUT should be a JSON array containing:
