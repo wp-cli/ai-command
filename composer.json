@@ -34,7 +34,10 @@
             "ai credentials list",
             "ai check",
             "ai generate",
-            "ai status"
+            "ai status",
+            "connectors",
+            "connectors get",
+            "connectors list"
         ]
     },
     "autoload": {
