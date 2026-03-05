@@ -25,16 +25,6 @@ use WP_CLI_Command;
 class Credentials_Command extends WP_CLI_Command {
 
 	/**
-	 * The option name prefix where credentials are stored.
-	 */
-	const OPTION_PREFIX = 'connectors_ai_';
-
-	/**
-	 * The option name suffix where credentials are stored.
-	 */
-	const OPTION_SUFFIX = '_api_key';
-
-	/**
 	 * Lists all stored AI provider credentials.
 	 *
 	 * ## OPTIONS
@@ -57,7 +47,7 @@ class Credentials_Command extends WP_CLI_Command {
 	 *     +----------+----------+
 	 *     | provider | api_key  |
 	 *     +----------+----------+
-	 *     | openai   | sk-***** |
+	 *     | openai   | ••••••• |
 	 *     +----------+----------+
 	 *
 	 * @subcommand list
@@ -108,7 +98,7 @@ class Credentials_Command extends WP_CLI_Command {
 	 *
 	 *     # Get OpenAI credentials
 	 *     $ wp ai credentials get openai
-	 *     {"provider":"openai","api_key":"sk-*****"}
+	 *     {"provider":"openai","api_key":"••••••••••••6789"}
 	 *
 	 * @when after_wp_load
 	 *
@@ -119,7 +109,7 @@ class Credentials_Command extends WP_CLI_Command {
 	public function get( $args, $assoc_args ) {
 		list( $provider ) = $args;
 
-		$option_name = self::OPTION_PREFIX . $provider . self::OPTION_SUFFIX;
+		$option_name = $this->get_connector_setting_name( $provider );
 		$raw_key     = get_option( $option_name, '' );
 		$api_key     = is_string( $raw_key ) ? $raw_key : '';
 
@@ -171,7 +161,7 @@ class Credentials_Command extends WP_CLI_Command {
 		list( $provider ) = $args;
 
 		$api_key     = $assoc_args['api-key'];
-		$option_name = self::OPTION_PREFIX . $provider . self::OPTION_SUFFIX;
+		$option_name = $this->get_connector_setting_name( $provider );
 
 		// Remove any sanitize callback to bypass provider-side validation (e.g., live API checks).
 		remove_all_filters( "sanitize_option_{$option_name}" );
@@ -203,7 +193,7 @@ class Credentials_Command extends WP_CLI_Command {
 	public function delete( $args, $assoc_args ) {
 		list( $provider ) = $args;
 
-		$option_name = self::OPTION_PREFIX . $provider . self::OPTION_SUFFIX;
+		$option_name = $this->get_connector_setting_name( $provider );
 		$raw_key     = get_option( $option_name, '' );
 		$api_key     = is_string( $raw_key ) ? $raw_key : '';
 
@@ -214,6 +204,46 @@ class Credentials_Command extends WP_CLI_Command {
 		delete_option( $option_name );
 
 		WP_CLI::success( sprintf( 'Credentials for provider "%s" have been deleted.', $provider ) );
+	}
+
+	/**
+	 * Gets the option name for a provider's API key from the connector registry.
+	 *
+	 * @param string $provider The connector/provider ID.
+	 * @return string The option name.
+	 */
+	private function get_connector_setting_name( string $provider ): string {
+		if ( ! function_exists( '_wp_connectors_get_connector_settings' ) ) {
+			WP_CLI::error( 'Requires WordPress 7.0 or greater.' );
+		}
+
+		$settings = _wp_connectors_get_connector_settings();
+
+		if ( ! isset( $settings[ $provider ] ) ) {
+			WP_CLI::error( sprintf( 'Provider "%s" is not a supported AI connector.', $provider ) );
+		}
+
+		$setting_name = $this->get_api_key_setting_name( $settings[ $provider ]['authentication'] ?? [] );
+
+		if ( null === $setting_name ) {
+			WP_CLI::error( sprintf( 'Provider "%s" does not support API key authentication.', $provider ) );
+		}
+
+		return $setting_name;
+	}
+
+	/**
+	 * Returns the option/setting name if the given authentication config is an API key type, or null otherwise.
+	 *
+	 * @param mixed $auth Authentication config from the connector registry.
+	 * @return string|null
+	 */
+	private function get_api_key_setting_name( $auth ): ?string {
+		if ( ! is_array( $auth ) || ! isset( $auth['method'] ) || 'api_key' !== $auth['method'] || empty( $auth['setting_name'] ) ) {
+			return null;
+		}
+
+		return (string) $auth['setting_name'];
 	}
 
 	/**
@@ -229,15 +259,13 @@ class Credentials_Command extends WP_CLI_Command {
 		$credentials = array();
 
 		foreach ( _wp_connectors_get_connector_settings() as $connector_id => $connector_data ) {
-			if ( ! isset( $connector_data['authentication'] ) ) {
-				continue;
-			}
-			$auth = $connector_data['authentication'];
-			if ( 'api_key' !== $auth['method'] || empty( $auth['setting_name'] ) ) {
+			$setting_name = $this->get_api_key_setting_name( $connector_data['authentication'] ?? [] );
+
+			if ( null === $setting_name ) {
 				continue;
 			}
 
-			$raw   = get_option( $auth['setting_name'], '' );
+			$raw   = get_option( $setting_name, '' );
 			$value = is_string( $raw ) ? $raw : '';
 			if ( '' !== $value ) {
 				$credentials[ $connector_id ] = $value;

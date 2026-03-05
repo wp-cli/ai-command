@@ -80,7 +80,7 @@ Feature: Manage AI provider credentials
     When I try `wp ai credentials get nonexistent`
     Then STDERR should contain:
       """
-      Error: Credentials for provider "nonexistent" not found.
+      Error: Provider "nonexistent" is not a supported AI connector.
       """
     And the return code should be 1
 
