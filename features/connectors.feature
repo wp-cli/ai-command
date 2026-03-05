@@ -146,12 +146,8 @@ Feature: List and get AI connectors
 
   @require-wp-7.0
   Scenario: Community plugin shows up in connectors list
-    Given these installed and active plugins:
-      """
-      ai-provider-for-azure-openai
-      """
-
-    When I run `wp connectors list --format=json`
+    When I run `wp plugin install https://github.com/soderlind/ai-provider-for-azure-openai/archive/refs/heads/main.zip --activate`
+    And I run `wp connectors list --format=json`
     Then STDOUT should be a JSON array containing:
       """
       [{"status":"active"}]
