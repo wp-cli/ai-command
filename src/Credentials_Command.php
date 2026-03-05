@@ -25,11 +25,6 @@ use WP_CLI_Command;
 class Credentials_Command extends WP_CLI_Command {
 
 	/**
-	 * The option name where credentials are stored.
-	 */
-	const OPTION_NAME = 'wp_ai_client_provider_credentials';
-
-	/**
 	 * Lists all stored AI provider credentials.
 	 *
 	 * ## OPTIONS
@@ -52,7 +47,7 @@ class Credentials_Command extends WP_CLI_Command {
 	 *     +----------+----------+
 	 *     | provider | api_key  |
 	 *     +----------+----------+
-	 *     | openai   | sk-***** |
+	 *     | openai   | ••••••• |
 	 *     +----------+----------+
 	 *
 	 * @subcommand list
@@ -74,7 +69,7 @@ class Credentials_Command extends WP_CLI_Command {
 		foreach ( $credentials as $provider => $api_key ) {
 			$items[] = array(
 				'provider' => $provider,
-				'api_key'  => $this->mask_api_key( $api_key ?? '' ),
+				'api_key'  => $api_key,
 			);
 		}
 
@@ -103,7 +98,7 @@ class Credentials_Command extends WP_CLI_Command {
 	 *
 	 *     # Get OpenAI credentials
 	 *     $ wp ai credentials get openai
-	 *     {"provider":"openai","api_key":"sk-*****"}
+	 *     {"provider":"openai","api_key":"••••••••••••6789"}
 	 *
 	 * @when after_wp_load
 	 *
@@ -114,15 +109,17 @@ class Credentials_Command extends WP_CLI_Command {
 	public function get( $args, $assoc_args ) {
 		list( $provider ) = $args;
 
-		$credentials = $this->get_all_credentials();
+		$option_name = $this->get_connector_setting_name( $provider );
+		$raw_key     = get_option( $option_name, '' );
+		$api_key     = is_string( $raw_key ) ? $raw_key : '';
 
-		if ( ! isset( $credentials[ $provider ] ) ) {
+		if ( '' === $api_key ) {
 			WP_CLI::error( sprintf( 'Credentials for provider "%s" not found.', $provider ) );
 		}
 
 		$data = array(
 			'provider' => $provider,
-			'api_key'  => $this->mask_api_key( $credentials[ $provider ] ?? '' ),
+			'api_key'  => $api_key,
 		);
 
 		$format = $assoc_args['format'] ?? 'json';
@@ -164,11 +161,11 @@ class Credentials_Command extends WP_CLI_Command {
 		list( $provider ) = $args;
 
 		$api_key     = $assoc_args['api-key'];
-		$credentials = $this->get_all_credentials();
+		$option_name = $this->get_connector_setting_name( $provider );
 
-		$credentials[ $provider ] = $api_key;
-
-		$this->save_all_credentials( $credentials );
+		// Remove any sanitize callback to bypass provider-side validation (e.g., live API checks).
+		remove_all_filters( "sanitize_option_{$option_name}" );
+		update_option( $option_name, $api_key, false );
 
 		WP_CLI::success( sprintf( 'Credentials for provider "%s" have been saved.', $provider ) );
 	}
@@ -196,16 +193,57 @@ class Credentials_Command extends WP_CLI_Command {
 	public function delete( $args, $assoc_args ) {
 		list( $provider ) = $args;
 
-		$credentials = $this->get_all_credentials();
+		$option_name = $this->get_connector_setting_name( $provider );
+		$raw_key     = get_option( $option_name, '' );
+		$api_key     = is_string( $raw_key ) ? $raw_key : '';
 
-		if ( ! isset( $credentials[ $provider ] ) ) {
+		if ( '' === $api_key ) {
 			WP_CLI::error( sprintf( 'Credentials for provider "%s" not found.', $provider ) );
 		}
 
-		unset( $credentials[ $provider ] );
-		$this->save_all_credentials( $credentials );
+		delete_option( $option_name );
 
 		WP_CLI::success( sprintf( 'Credentials for provider "%s" have been deleted.', $provider ) );
+	}
+
+	/**
+	 * Gets the option name for a provider's API key from the connector registry.
+	 *
+	 * @param string $provider The connector/provider ID.
+	 * @return string The option name.
+	 */
+	private function get_connector_setting_name( string $provider ): string {
+		if ( ! function_exists( '_wp_connectors_get_connector_settings' ) ) {
+			WP_CLI::error( 'Requires WordPress 7.0 or greater.' );
+		}
+
+		$settings = _wp_connectors_get_connector_settings();
+
+		if ( ! isset( $settings[ $provider ] ) ) {
+			WP_CLI::error( sprintf( 'Provider "%s" is not a supported AI connector.', $provider ) );
+		}
+
+		$setting_name = $this->get_api_key_setting_name( $settings[ $provider ]['authentication'] ?? [] );
+
+		if ( null === $setting_name ) {
+			WP_CLI::error( sprintf( 'Provider "%s" does not support API key authentication.', $provider ) );
+		}
+
+		return $setting_name;
+	}
+
+	/**
+	 * Returns the option/setting name if the given authentication config is an API key type, or null otherwise.
+	 *
+	 * @param mixed $auth Authentication config from the connector registry.
+	 * @return string|null
+	 */
+	private function get_api_key_setting_name( $auth ): ?string {
+		if ( ! is_array( $auth ) || ! isset( $auth['method'] ) || 'api_key' !== $auth['method'] || empty( $auth['setting_name'] ) ) {
+			return null;
+		}
+
+		return (string) $auth['setting_name'];
 	}
 
 	/**
@@ -214,51 +252,28 @@ class Credentials_Command extends WP_CLI_Command {
 	 * @return array<string, string>
 	 */
 	private function get_all_credentials() {
-		$credentials = get_option( self::OPTION_NAME, array() );
-
-		if ( ! is_array( $credentials ) ) {
+		if ( ! function_exists( '_wp_connectors_get_connector_settings' ) ) {
 			return array();
 		}
 
-		/**
-		 * @var array<string, string> $credentials
-		 */
+		$credentials = array();
+
+		foreach ( _wp_connectors_get_connector_settings() as $connector_id => $connector_data ) {
+			$setting_name = $this->get_api_key_setting_name( $connector_data['authentication'] ?? [] );
+
+			if ( null === $setting_name ) {
+				continue;
+			}
+
+			$raw   = get_option( $setting_name, '' );
+			$value = is_string( $raw ) ? $raw : '';
+			if ( '' !== $value ) {
+				$credentials[ $connector_id ] = $value;
+			}
+		}
+
+		ksort( $credentials );
 
 		return $credentials;
-	}
-
-	/**
-	 * Saves all credentials to the database.
-	 *
-	 * @param array<string, string> $credentials The credentials to save.
-	 * @return bool
-	 */
-	private function save_all_credentials( $credentials ) {
-		if ( empty( $credentials ) ) {
-			return delete_option( self::OPTION_NAME );
-		}
-
-		return update_option( self::OPTION_NAME, $credentials, false );
-	}
-
-	/**
-	 * Masks an API key for display purposes.
-	 *
-	 * @param string $api_key The API key to mask.
-	 * @return string
-	 */
-	private function mask_api_key( $api_key ) {
-		if ( empty( $api_key ) ) {
-			return '';
-		}
-
-		$length = strlen( $api_key );
-
-		if ( $length <= 8 ) {
-			return str_repeat( '*', $length );
-		}
-
-		// Show first 3 and last 4 characters
-		return substr( $api_key, 0, 3 ) . str_repeat( '*', min( 10, $length - 7 ) ) . substr( $api_key, -4 );
 	}
 }
