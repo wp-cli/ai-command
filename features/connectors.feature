@@ -114,6 +114,10 @@ Feature: List and get AI connectors
 
   @require-wp-7.0
   Scenario: Get a connector shows masked API key and connected status when set
+    Given these installed and active plugins:
+      """
+      ai-provider-for-openai
+      """
     When I run `wp option update connectors_ai_openai_api_key sk-test123456789`
     Then STDOUT should contain:
       """
@@ -121,9 +125,13 @@ Feature: List and get AI connectors
       """
 
     When I run `wp connectors get openai --format=json`
-    Then STDOUT should be JSON containing:
+    Then STDOUT should contain:
       """
-      {"name":"OpenAI","status":"connected","api_key":"••••••••••••6789"}
+      "status": "connected"
+      """
+    And STDOUT should contain:
+      """
+      "api_key": "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u20226789"
       """
 
   @require-wp-7.0
