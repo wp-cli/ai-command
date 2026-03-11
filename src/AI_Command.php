@@ -81,7 +81,7 @@ class AI_Command extends WP_CLI_Command {
 	 * : For image generation, path to save the generated image.
 	 *
 	 * [--stdout]
-	 * Output the whole image using standard output (incompatible with --destination-file=)
+	 * : Output the whole image using standard output (incompatible with --destination-file=)
 	 *
 	 * [--format=<format>]
 	 * : Output format for text.
