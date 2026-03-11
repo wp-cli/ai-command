@@ -112,7 +112,8 @@ Feature: List and get AI connectors
       {"name":"OpenAI","description":"Text and image generation with GPT and Dall-E.","status":"not installed","credentials_url":"https://platform.openai.com/api-keys","api_key":""}
       """
 
-  @require-wp-7.0
+  # TODO: Depends on https://core.trac.wordpress.org/ticket/64819.
+  @require-wp-7.0 @broken
   Scenario: Get a connector shows masked API key and connected status when set
     Given these installed and active plugins:
       """
@@ -191,7 +192,8 @@ Feature: List and get AI connectors
       "name":"Anthropic"
       """
 
-  @require-wp-7.0
+  # Plugin requires PHP 7.4.
+  @require-wp-7.0 @require-php-7.4
   Scenario: Community plugin shows up in connectors list
     When I run `wp plugin install https://github.com/soderlind/ai-provider-for-azure-openai/archive/refs/heads/main.zip --activate`
     And I run `wp connectors list --format=json`
