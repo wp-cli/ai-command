@@ -9,6 +9,8 @@
         "wp-cli/wp-cli": "^2.13"
     },
     "require-dev": {
+        "wp-cli/entity-command": "^2",
+        "wp-cli/extension-command": "^2",
         "wp-cli/wp-cli-tests": "^5"
     },
     "config": {
@@ -27,14 +29,12 @@
         "bundled": false,
         "commands": [
             "ai",
-            "ai credentials",
-            "ai credentials get",
-            "ai credentials set",
-            "ai credentials delete",
-            "ai credentials list",
             "ai check",
             "ai generate",
-            "ai status"
+            "ai status",
+            "connectors",
+            "connectors get",
+            "connectors list"
         ]
     },
     "autoload": {

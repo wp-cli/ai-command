@@ -47,140 +47,6 @@ wp ai
 
 
 
-### wp ai credentials
-
-Manages AI provider credentials.
-
-~~~
-wp ai credentials
-~~~
-
-**EXAMPLES**
-
-    # List all stored AI provider credentials
-    $ wp ai credentials list
-
-    # Get credentials for a specific provider
-    $ wp ai credentials get openai
-
-    # Set credentials for a provider
-    $ wp ai credentials set openai --api-key=sk-...
-
-    # Delete credentials for a provider
-    $ wp ai credentials delete openai
-
-
-
-
-
-### wp ai credentials get
-
-Gets credentials for a specific AI provider.
-
-~~~
-wp ai credentials get <provider> [--format=<format>]
-~~~
-
-**OPTIONS**
-
-	<provider>
-		The AI provider name (e.g., openai, anthropic, google).
-
-	[--format=<format>]
-		Render output in a particular format.
-		---
-		default: json
-		options:
-		  - json
-		  - yaml
-		---
-
-**EXAMPLES**
-
-    # Get OpenAI credentials
-    $ wp ai credentials get openai
-    {"provider":"openai","api_key":"sk-*****"}
-
-
-
-### wp ai credentials set
-
-Sets or updates credentials for an AI provider.
-
-~~~
-wp ai credentials set <provider> --api-key=<api-key>
-~~~
-
-**OPTIONS**
-
-	<provider>
-		The AI provider name (e.g., openai, anthropic, google).
-
-	--api-key=<api-key>
-		The API key for the provider.
-
-**EXAMPLES**
-
-    # Set OpenAI credentials
-    $ wp ai credentials set openai --api-key=sk-...
-    Success: Credentials for provider "openai" have been saved.
-
-
-
-### wp ai credentials delete
-
-Deletes credentials for an AI provider.
-
-~~~
-wp ai credentials delete <provider>
-~~~
-
-**OPTIONS**
-
-	<provider>
-		The AI provider name (e.g., openai, anthropic, google).
-
-**EXAMPLES**
-
-    # Delete OpenAI credentials
-    $ wp ai credentials delete openai
-    Success: Credentials for provider "openai" have been deleted.
-
-
-
-### wp ai credentials list
-
-Lists all stored AI provider credentials.
-
-~~~
-wp ai credentials list [--format=<format>]
-~~~
-
-**OPTIONS**
-
-	[--format=<format>]
-		Render output in a particular format.
-		---
-		default: table
-		options:
-		  - table
-		  - csv
-		  - json
-		  - yaml
-		---
-
-**EXAMPLES**
-
-    # List all credentials
-    $ wp ai credentials list
-    +----------+----------+
-    | provider | api_key  |
-    +----------+----------+
-    | openai   | sk-***** |
-    +----------+----------+
-
-
-
 ### wp ai check
 
 Checks if a prompt is supported for generation.
@@ -217,7 +83,7 @@ wp ai check <prompt> [--type=<type>]
 Generates AI content.
 
 ~~~
-wp ai generate <type> <prompt> [--model=<models>] [--provider=<provider>] [--temperature=<temperature>] [--top-p=<top-p>] [--top-k=<top-k>] [--max-tokens=<tokens>] [--system-instruction=<instruction>] [--destination-file=<file>] [--format=<format>]
+wp ai generate <type> <prompt> [--model=<models>] [--provider=<provider>] [--temperature=<temperature>] [--top-p=<top-p>] [--top-k=<top-k>] [--max-tokens=<tokens>] [--system-instruction=<instruction>] [--destination-file=<file>] [--stdout] [--format=<format>]
 ~~~
 
 **OPTIONS**
@@ -257,8 +123,8 @@ wp ai generate <type> <prompt> [--model=<models>] [--provider=<provider>] [--tem
 	[--destination-file=<file>]
 		For image generation, path to save the generated image.
 
-[--stdout]
-Output the whole image using standard output (incompatible with --destination-file=)
+	[--stdout]
+		Output the whole image using standard output (incompatible with --destination-file=)
 
 	[--format=<format>]
 		Output format for text.
@@ -326,9 +192,121 @@ are available. Displays a table showing supported capabilities.
     | Image Generation | No        |
     +------------------+-----------+
 
+
+
+### wp connectors
+
+Lists and retrieves information about AI connectors.
+
+~~~
+wp connectors
+~~~
+
+**EXAMPLES**
+
+    # List all available connectors
+    $ wp connectors list
+
+    # Get details about a specific connector
+    $ wp connectors get openai
+
+
+
+### wp connectors get
+
+Gets details about a specific AI connector.
+
+~~~
+wp connectors get <connector> [--fields=<fields>] [--format=<format>]
+~~~
+
+**OPTIONS**
+
+	<connector>
+		The connector ID (e.g., openai, anthropic, google).
+
+	[--fields=<fields>]
+		Comma-separated list of fields to include in the output.
+
+	[--format=<format>]
+		Render output in a particular format.
+		---
+		default: table
+		options:
+		  - table
+		  - csv
+		  - json
+		  - yaml
+		---
+
+**EXAMPLES**
+
+    # Get details for the OpenAI connector
+    $ wp connectors get openai
+    +-----------------+-----------------------------------------------+
+    | Field           | Value                                         |
+    +-----------------+-----------------------------------------------+
+    | name            | OpenAI                                        |
+    | description     | Text and image generation with GPT and Dall-E |
+    | status          | connected                                     |
+    | credentials_url | https://platform.openai.com/api-keys          |
+    | api_key         | ••••••••••••6789                              |
+    +-----------------+-----------------------------------------------+
+
+
+
+### wp connectors list
+
+Lists all available AI connectors.
+
+~~~
+wp connectors list [--status=<status>] [--fields=<fields>] [--format=<format>]
+~~~
+
+**OPTIONS**
+
+	[--status=<status>]
+		Filter connectors by status.
+		---
+		options:
+		  - connected
+		  - active
+		  - installed
+		  - not installed
+		---
+
+	[--fields=<fields>]
+		Comma-separated list of fields to include in the output.
+
+	[--format=<format>]
+		Render output in a particular format.
+		---
+		default: table
+		options:
+		  - table
+		  - csv
+		  - json
+		  - yaml
+		---
+
+**EXAMPLES**
+
+    # List all connectors
+    $ wp connectors list
+    +-----------+-----------------------------------------------+---------------+
+    | name      | description                                   | status        |
+    +-----------+-----------------------------------------------+---------------+
+    | Anthropic | Text generation with Claude.                  | not installed |
+    | Google    | Text and image generation with Gemini...      | not installed |
+    | OpenAI    | Text and image generation with GPT and Dall-E | connected     |
+    +-----------+-----------------------------------------------+---------------+
+
+    # List only connected connectors
+    $ wp connectors list --status=connected
+
 ## Installing
 
-Installing this package requires WP-CLI v2.12 or greater. Update to the latest stable release with `wp cli update`.
+Installing this package requires WP-CLI v2.13 or greater. Update to the latest stable release with `wp cli update`.
 
 Once you've done so, you can install the latest stable version of this package with:
 
@@ -339,7 +317,7 @@ wp package install wp-cli/ai-command:@stable
 To install the latest development version of this package, use the following command instead:
 
 ```bash
-wp package install wp-cli/ai-command:dev-main
+wp package install wp-cli/ai-command:dev-master
 ```
 
 ## Contributing
