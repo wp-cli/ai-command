@@ -4,7 +4,6 @@ namespace WP_CLI\AI;
 
 use WP_CLI;
 use WP_CLI_Command;
-use WordPress\AI_Client\AI_Client;
 use WordPress\AiClient\Results\DTO\TokenUsage;
 
 /**
