@@ -80,11 +80,7 @@ class Connectors_Command extends WP_CLI_Command {
 	 * @return void
 	 */
 	public function list_( $args, $assoc_args ) {
-		if ( ! function_exists( '_wp_connectors_get_connector_settings' ) ) {
-			WP_CLI::error( 'Requires WordPress 7.0 or greater.' );
-		}
-
-		$connectors = _wp_connectors_get_connector_settings();
+		$connectors = wp_get_connectors();
 
 		$items = array();
 		foreach ( $connectors as $connector_id => $connector ) {
@@ -158,20 +154,15 @@ class Connectors_Command extends WP_CLI_Command {
 	 * @return void
 	 */
 	public function get( $args, $assoc_args ) {
-		if ( ! function_exists( '_wp_connectors_get_connector_settings' ) ) {
-			WP_CLI::error( 'Requires WordPress 7.0 or greater.' );
-		}
-
 		list( $connector_id ) = $args;
 
-		$connectors = _wp_connectors_get_connector_settings();
+		$connector = wp_get_connector( $connector_id );
 
-		if ( ! isset( $connectors[ $connector_id ] ) || ! is_array( $connectors[ $connector_id ] ) ) {
+		if ( ! $connector ) {
 			WP_CLI::error( sprintf( 'Connector "%s" not found.', $connector_id ) );
 		}
 
-		$connector = $connectors[ $connector_id ];
-		$item      = $this->build_connector_item( $connector_id, $connector );
+		$item = $this->build_connector_item( $connector_id, $connector );
 
 		// Retrieve and append the (possibly masked) API key.
 		$auth    = is_array( $connector['authentication'] ) ? $connector['authentication'] : array();
@@ -196,7 +187,7 @@ class Connectors_Command extends WP_CLI_Command {
 	 * Builds a flat item array from a connector settings array.
 	 *
 	 * @param string  $connector_id The connector ID.
-	 * @param mixed[] $connector    Connector settings from _wp_connectors_get_connector_settings().
+	 * @param mixed[] $connector    Connector settings from wp_get_connectors().
 	 * @return array{name: string, description: string, status: string, type: string, auth_method: string, credentials_url: string, plugin_slug: string}
 	 */
 	private function build_connector_item( string $connector_id, array $connector ): array {
@@ -221,7 +212,7 @@ class Connectors_Command extends WP_CLI_Command {
 	 * Possible values: 'connected', 'active', 'installed', 'not installed'.
 	 *
 	 * @param string  $connector_id The connector ID.
-	 * @param mixed[] $connector    Connector settings from _wp_connectors_get_connector_settings().
+	 * @param mixed[] $connector    Connector settings from wp_get_connectors().
 	 * @return string
 	 */
 	private function get_connector_status( string $connector_id, array $connector ): string {
