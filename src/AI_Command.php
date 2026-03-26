@@ -343,7 +343,7 @@ class AI_Command extends WP_CLI_Command {
 				// @phpstan-ignore class.notFound
 				$token_usage[ TokenUsage::KEY_COMPLETION_TOKENS ],
 				// @phpstan-ignore class.notFound
-				$token_usage[ TokenUsage::KEY_TOTAL_TOKENS ],
+				$token_usage[ TokenUsage::KEY_TOTAL_TOKENS ]
 			),
 			'ai'
 		);
