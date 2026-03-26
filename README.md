@@ -306,19 +306,11 @@ wp connectors list [--status=<status>] [--fields=<fields>] [--format=<format>]
 
 ## Installing
 
-Installing this package requires WP-CLI v2.13 or greater. Update to the latest stable release with `wp cli update`.
+This package is included with WP-CLI itself, no additional installation necessary.
 
-Once you've done so, you can install the latest stable version of this package with:
+To install the latest version of this package over what's included in WP-CLI, run:
 
-```bash
-wp package install wp-cli/ai-command:@stable
-```
-
-To install the latest development version of this package, use the following command instead:
-
-```bash
-wp package install wp-cli/ai-command:dev-master
-```
+    wp package install git@github.com:wp-cli/ai-command.git
 
 ## Contributing
 
@@ -341,6 +333,10 @@ Once you’ve done a bit of searching and discovered there isn’t an open or fi
 Want to contribute a new feature? Please first [open a new issue](https://github.com/wp-cli/ai-command/issues/new) to discuss whether the feature is a good fit for the project.
 
 Once you've decided to commit the time to seeing your pull request through, [please follow our guidelines for creating a pull request](https://make.wordpress.org/cli/handbook/pull-requests/) to make sure it's a pleasant experience. See "[Setting up](https://make.wordpress.org/cli/handbook/pull-requests/#setting-up)" for details specific to working on this package locally.
+
+### License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 ## Support
 
