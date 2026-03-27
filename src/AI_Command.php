@@ -209,9 +209,9 @@ class AI_Command extends WP_CLI_Command {
 	public function is_supported( $args, $assoc_args ) {
 		// @phpstan-ignore function.notFound
 		if ( wp_supports_ai() ) {
-			WP_CLI::success( 'AI features are supported.' );
+			WP_CLI::halt( 0 );
 		} else {
-			WP_CLI::error( 'AI features are not supported in this environment.' );
+			WP_CLI::halt( 1 );
 		}
 	}
 
