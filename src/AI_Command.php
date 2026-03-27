@@ -3,6 +3,7 @@
 namespace WP_CLI\AI;
 
 use WP_CLI;
+use WP_CLI\Utils;
 use WP_CLI_Command;
 use WordPress\AiClient\Results\DTO\TokenUsage;
 
@@ -117,6 +118,11 @@ class AI_Command extends WP_CLI_Command {
 	 */
 	public function generate( $args, $assoc_args ) {
 		list( $type, $prompt ) = $args;
+
+		// @phpstan-ignore function.notFound
+		if ( ! wp_supports_ai() ) {
+			WP_CLI::error( 'AI features are not supported in this environment.' );
+		}
 
 		try {
 			// @phpstan-ignore function.notFound
@@ -247,6 +253,11 @@ class AI_Command extends WP_CLI_Command {
 		list( $prompt ) = $args;
 		$type           = $assoc_args['type'] ?? 'text';
 
+		// @phpstan-ignore function.notFound
+		if ( ! wp_supports_ai() ) {
+			WP_CLI::error( 'AI features are not supported in this environment.' );
+		}
+
 		try {
 			// @phpstan-ignore function.notFound
 			$builder = wp_ai_client_prompt( $prompt );
@@ -301,7 +312,7 @@ class AI_Command extends WP_CLI_Command {
 	 *     # Check AI status
 	 *     $ wp ai status
 	 *     +------------------+-----------+
-	 *     | Capability       | Supported |
+	 *     | capability       | supported |
 	 *     +------------------+-----------+
 	 *     | Text Generation  | Yes       |
 	 *     | Image Generation | No        |
@@ -329,6 +340,26 @@ class AI_Command extends WP_CLI_Command {
 				array(
 					'capability' => 'Image Generation',
 					'supported'  => $builder->is_supported_for_image_generation() ? 'Yes' : 'No',
+				),
+				array(
+					'capability' => 'Text to Speech Generation',
+					'supported'  => $builder->is_supported_for_text_to_speech_conversion() ? 'Yes' : 'No',
+				),
+				array(
+					'capability' => 'Video Generation',
+					'supported'  => $builder->is_supported_for_video_generation() ? 'Yes' : 'No',
+				),
+				array(
+					'capability' => 'Speech Generation',
+					'supported'  => $builder->is_supported_for_speech_generation() ? 'Yes' : 'No',
+				),
+				array(
+					'capability' => 'Music Generation',
+					'supported'  => $builder->is_supported_for_music_generation() ? 'Yes' : 'No',
+				),
+				array(
+					'capability' => 'Embedding Generation',
+					'supported'  => $builder->is_supported_for_embedding_generation() ? 'Yes' : 'No',
 				),
 			);
 
@@ -358,6 +389,10 @@ class AI_Command extends WP_CLI_Command {
 
 		// @phpstan-ignore class.notFound
 		$text = $builder->generate_text_result();
+
+		if ( is_wp_error( $text ) ) {
+			WP_CLI::error( $text );
+		}
 
 		if ( 'json' === $format ) {
 			$json = json_encode( array( 'text' => $text->toText() ) );
@@ -418,6 +453,10 @@ class AI_Command extends WP_CLI_Command {
 		// @phpstan-ignore class.notFound
 		$image_file = $builder->generate_image();
 
+		if ( is_wp_error( $image_file ) ) {
+			WP_CLI::error( $image_file );
+		}
+
 		if ( isset( $assoc_args['destination-file'] ) ) {
 			$output_path = $assoc_args['destination-file'];
 			$output_path = realpath( dirname( $output_path ) ) . DIRECTORY_SEPARATOR . basename( $output_path );
@@ -444,7 +483,7 @@ class AI_Command extends WP_CLI_Command {
 			}
 
 			WP_CLI::success( 'Image saved to ' . $output_path );
-		} elseif ( $assoc_args['stdout'] ) {
+		} elseif ( Utils\get_flag_value( $assoc_args, 'stdout', false ) ) {
 			$data_uri = $image_file->getDataUri();
 
 			$data_parts = $data_uri ? explode( ',', $data_uri, 2 ) : [];
@@ -462,7 +501,6 @@ class AI_Command extends WP_CLI_Command {
 
 			WP_CLI::log( $image_data );
 		} else {
-			WP_CLI::success( 'Image generated:' );
 			WP_CLI::line( (string) $image_file->getDataUri() );
 		}
 	}

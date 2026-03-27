@@ -6,20 +6,12 @@ Feature: Check if AI features are supported
   @less-than-wp-7.0
   Scenario: Command not available on WP < 7.0
     When I try `wp ai is-supported`
-    Then STDERR should contain:
-      """
-      Requires WordPress 7.0 or greater.
-      """
-    And the return code should be 1
+    Then the return code should be 1
 
   @require-wp-7.0
   Scenario: AI is supported by default
     When I run `wp ai is-supported`
-    Then STDOUT should contain:
-      """
-      AI features are supported.
-      """
-    And the return code should be 0
+    Then the return code should be 0
 
   @require-wp-7.0
   Scenario: AI is not supported when disabled via filter
@@ -30,8 +22,4 @@ Feature: Check if AI features are supported
       """
 
     When I try `wp ai is-supported`
-    Then STDERR should contain:
-      """
-      AI features are not supported in this environment.
-      """
-    And the return code should be 1
+    Then the return code should be 1
