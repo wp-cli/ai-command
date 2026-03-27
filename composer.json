@@ -31,6 +31,7 @@
             "ai",
             "ai check",
             "ai generate",
+            "ai is-supported",
             "ai status",
             "connectors",
             "connectors get",

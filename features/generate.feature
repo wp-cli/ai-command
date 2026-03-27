@@ -196,3 +196,18 @@ Feature: Generate AI content
       """
       Top-k must be a positive integer
       """
+
+  @require-wp-7.0
+  Scenario: Generate fails when AI is disabled
+    Given a wp-content/mu-plugins/disable-ai.php file:
+      """
+      <?php
+      add_filter( 'wp_supports_ai', '__return_false' );
+      """
+
+    When I try `wp ai generate text "Test prompt"`
+    Then the return code should be 1
+    And STDERR should contain:
+      """
+      AI features are not supported in this environment.
+      """

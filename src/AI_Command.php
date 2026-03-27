@@ -122,6 +122,10 @@ class AI_Command extends WP_CLI_Command {
 			// @phpstan-ignore function.notFound
 			$builder = wp_ai_client_prompt( $prompt );
 
+			if ( is_wp_error( $builder ) ) {
+				WP_CLI::error( $builder->get_error_message() );
+			}
+
 			if ( isset( $assoc_args['provider'] ) ) {
 				$builder = $builder->using_provider( $assoc_args['provider'] );
 			}
@@ -186,6 +190,32 @@ class AI_Command extends WP_CLI_Command {
 	}
 
 	/**
+	 * Checks whether AI features are supported in the current environment.
+	 *
+	 * Exits with code 0 if AI features are supported, or code 1 if they are not.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     # Check if AI is supported
+	 *     $ wp ai is-supported
+	 *     Success: AI features are supported.
+	 *
+	 * @subcommand is-supported
+	 *
+	 * @param string[] $args       Positional arguments. Unused.
+	 * @param string[] $assoc_args Associative arguments. Unused.
+	 * @return void
+	 */
+	public function is_supported( $args, $assoc_args ) {
+		// @phpstan-ignore function.notFound
+		if ( wp_supports_ai() ) {
+			WP_CLI::success( 'AI features are supported.' );
+		} else {
+			WP_CLI::error( 'AI features are not supported in this environment.' );
+		}
+	}
+
+	/**
 	 * Checks if a prompt is supported for generation.
 	 *
 	 * ## OPTIONS
@@ -220,6 +250,10 @@ class AI_Command extends WP_CLI_Command {
 		try {
 			// @phpstan-ignore function.notFound
 			$builder = wp_ai_client_prompt( $prompt );
+
+			if ( is_wp_error( $builder ) ) {
+				WP_CLI::error( $builder->get_error_message() );
+			}
 
 			if ( 'text' === $type ) {
 				$supported = $builder->is_supported_for_text_generation();
@@ -281,6 +315,10 @@ class AI_Command extends WP_CLI_Command {
 		try {
 			// @phpstan-ignore function.notFound
 			$builder = wp_ai_client_prompt();
+
+			if ( is_wp_error( $builder ) ) {
+				WP_CLI::error( $builder->get_error_message() );
+			}
 
 			// Check each capability
 			$capabilities = array(
