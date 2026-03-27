@@ -3,7 +3,7 @@ wp-cli/ai-command
 
 Interacts with the WordPress AI Client
 
-[![Testing](https://github.com/wp-cli/ai-command/actions/workflows/testing.yml/badge.svg)](https://github.com/wp-cli/ai-command/actions/workflows/testing.yml)
+[![Testing](https://github.com/wp-cli/ai-command/actions/workflows/testing.yml/badge.svg)](https://github.com/wp-cli/ai-command/actions/workflows/testing.yml) [![Code Coverage](https://codecov.io/gh/wp-cli/ai-command/branch/main/graph/badge.svg)](https://codecov.io/gh/wp-cli/ai-command/tree/main)
 
 Quick links: [Using](#using) | [Installing](#installing) | [Contributing](#contributing) | [Support](#support)
 
@@ -157,6 +157,24 @@ wp ai generate <type> <prompt> [--model=<models>] [--provider=<provider>] [--tem
 
 
 
+### wp ai is-supported
+
+Checks whether AI features are supported in the current environment.
+
+~~~
+wp ai is-supported 
+~~~
+
+Exits with code 0 if AI features are supported, or code 1 if they are not.
+
+**EXAMPLES**
+
+    # Check if AI is supported
+    $ wp ai is-supported
+    Success: AI features are supported.
+
+
+
 ### wp ai status
 
 Checks which AI capabilities are currently supported.
@@ -186,7 +204,7 @@ are available. Displays a table showing supported capabilities.
     # Check AI status
     $ wp ai status
     +------------------+-----------+
-    | Capability       | Supported |
+    | capability       | supported |
     +------------------+-----------+
     | Text Generation  | Yes       |
     | Image Generation | No        |
