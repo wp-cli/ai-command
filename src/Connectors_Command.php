@@ -220,7 +220,7 @@ class Connectors_Command extends WP_CLI_Command {
 	private function get_connector_status( string $connector_id, array $connector ): string {
 		$auth        = is_array( $connector['authentication'] ) ? $connector['authentication'] : array();
 		$plugin      = isset( $connector['plugin'] ) && is_array( $connector['plugin'] ) ? $connector['plugin'] : array();
-		$plugin_slug = isset( $plugin['slug'] ) && is_string( $plugin['slug'] ) ? $plugin['slug'] : '';
+		$plugin_file = isset( $plugin['file'] ) && is_string( $plugin['file'] ) ? $plugin['file'] : '';
 		$method      = isset( $auth['method'] ) && is_string( $auth['method'] ) ? $auth['method'] : '';
 		$setting     = isset( $auth['setting_name'] ) && is_string( $auth['setting_name'] ) ? $auth['setting_name'] : '';
 
@@ -232,15 +232,18 @@ class Connectors_Command extends WP_CLI_Command {
 			}
 		}
 
-		if ( ! $plugin_slug ) {
-			return 'active';
+		if ( ! $plugin_file ) {
+			return 'not installed';
 		}
 
-		if ( $this->is_plugin_active( $plugin_slug ) ) {
+		
+		if ( is_plugin_active( $plugin_file ) ) {
 			return 'active';
 		}
+		
+		$is_installed = file_exists( wp_normalize_path( WP_PLUGIN_DIR . '/' . $file ) );
 
-		if ( $this->is_plugin_installed( $plugin_slug ) ) {
+		if ( $is_installed) {
 			return 'installed';
 		}
 
@@ -255,49 +258,5 @@ class Connectors_Command extends WP_CLI_Command {
 	 */
 	private function scalar_to_string( $value ): string {
 		return is_scalar( $value ) ? (string) $value : '';
-	}
-
-	/**
-	 * Checks whether a plugin is installed, given its slug.
-	 *
-	 * @param string $slug The WordPress.org plugin slug.
-	 * @return bool
-	 */
-	private function is_plugin_installed( string $slug ): bool {
-		if ( ! function_exists( 'get_plugins' ) ) {
-			require_once ABSPATH . 'wp-admin/includes/plugin.php';
-		}
-
-		foreach ( array_keys( get_plugins() ) as $plugin_file ) {
-			if ( strpos( $plugin_file, $slug . '/' ) === 0 || $plugin_file === $slug . '.php' ) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	/**
-	 * Checks whether a plugin is active, given its slug.
-	 *
-	 * @param string $slug The WordPress.org plugin slug.
-	 * @return bool
-	 */
-	private function is_plugin_active( string $slug ): bool {
-		if ( ! function_exists( 'is_plugin_active' ) ) {
-			require_once ABSPATH . 'wp-admin/includes/plugin.php';
-		}
-
-		$active_plugins = (array) get_option( 'active_plugins', array() );
-		foreach ( $active_plugins as $plugin_file ) {
-			if ( ! is_string( $plugin_file ) ) {
-				continue;
-			}
-			if ( strpos( $plugin_file, $slug . '/' ) === 0 || $plugin_file === $slug . '.php' ) {
-				return true;
-			}
-		}
-
-		return false;
 	}
 }
