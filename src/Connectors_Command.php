@@ -236,14 +236,13 @@ class Connectors_Command extends WP_CLI_Command {
 			return 'not installed';
 		}
 
-		
 		if ( is_plugin_active( $plugin_file ) ) {
 			return 'active';
 		}
-		
+
 		$is_installed = file_exists( wp_normalize_path( WP_PLUGIN_DIR . '/' . $file ) );
 
-		if ( $is_installed) {
+		if ( $is_installed ) {
 			return 'installed';
 		}
 
