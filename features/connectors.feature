@@ -137,10 +137,10 @@ Feature: List and get AI connectors
 
   @require-wp-7.0
   Scenario: Get connector with fields filter including hidden fields
-    When I run `wp connectors get openai --fields=name,auth_method,type,plugin_slug --format=json`
+    When I run `wp connectors get openai --fields=name,auth_method,type,plugin_file --format=json`
     Then STDOUT should be JSON containing:
       """
-      {"name":"OpenAI","auth_method":"api_key","type":"ai_provider","plugin_slug":"ai-provider-for-openai"}
+      {"name":"OpenAI","auth_method":"api_key","type":"ai_provider","plugin_file":"ai-provider-for-openai/plugin.php"}
       """
 
   @require-wp-7.0

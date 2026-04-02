@@ -195,7 +195,7 @@ class Connectors_Command extends WP_CLI_Command {
 	private function build_connector_item( string $connector_id, array $connector ): array {
 		$auth        = is_array( $connector['authentication'] ) ? $connector['authentication'] : array();
 		$plugin      = isset( $connector['plugin'] ) && is_array( $connector['plugin'] ) ? $connector['plugin'] : array();
-		$plugin_slug = isset( $plugin['slug'] ) && is_string( $plugin['slug'] ) ? $plugin['slug'] : '';
+		$plugin_file = isset( $plugin['file'] ) && is_string( $plugin['file'] ) ? $plugin['file'] : '';
 
 		return array(
 			'name'            => $this->scalar_to_string( $connector['name'] ?? '' ),
@@ -204,7 +204,7 @@ class Connectors_Command extends WP_CLI_Command {
 			'type'            => $this->scalar_to_string( $connector['type'] ?? '' ),
 			'auth_method'     => isset( $auth['method'] ) && is_string( $auth['method'] ) ? $auth['method'] : '',
 			'credentials_url' => isset( $auth['credentials_url'] ) && is_string( $auth['credentials_url'] ) ? $auth['credentials_url'] : '',
-			'plugin_slug'     => $plugin_slug,
+			'plugin_file'     => $plugin_file,
 		);
 	}
 
