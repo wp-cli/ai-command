@@ -190,7 +190,7 @@ class Connectors_Command extends WP_CLI_Command {
 	 *
 	 * @param string  $connector_id The connector ID.
 	 * @param mixed[] $connector    Connector settings from wp_get_connectors().
-	 * @return array{name: string, description: string, status: string, type: string, auth_method: string, credentials_url: string, plugin_slug: string}
+	 * @return array{name: string, description: string, status: string, type: string, auth_method: string, credentials_url: string, plugin_file: string}
 	 */
 	private function build_connector_item( string $connector_id, array $connector ): array {
 		$auth        = is_array( $connector['authentication'] ) ? $connector['authentication'] : array();
