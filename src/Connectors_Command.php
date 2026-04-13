@@ -232,11 +232,7 @@ class Connectors_Command extends WP_CLI_Command {
 			}
 		}
 
-		if ( ! $plugin_file ) {
-			return 'not installed';
-		}
-
-		if ( is_plugin_active( $plugin_file ) ) {
+		if ( ! $plugin_file || is_plugin_active( $plugin_file ) ) {
 			return 'active';
 		}
 
