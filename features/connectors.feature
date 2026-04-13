@@ -193,7 +193,8 @@ Feature: List and get AI connectors
       """
 
   # Plugin requires PHP 7.4.
-  @require-wp-7.0 @require-php-7.4
+  # Currently broken because no 3P plugins have the plugin -> file metadata.
+  @require-wp-7.0 @require-php-7.4 @broken
   Scenario: Community plugin shows up in connectors list
     When I run `wp plugin install https://github.com/aslamdoctor/ai-provider-for-grok/archive/refs/heads/master.zip --activate`
     And I run `wp connectors list --format=json`
