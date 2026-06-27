@@ -3,5 +3,6 @@ default:
     default:
       contexts:
         - WP_CLI\Tests\Context\FeatureContext
+        - WP_CLI\AI\Tests\Context\FeatureContext
       paths:
         - features
