@@ -319,20 +319,25 @@ Feature: Generate AI content
 
   @require-wp-7.0
   Scenario: Generates alt text for image attachment
-    Given a file /tmp/test-image.png with base64 content:
-      """
-      iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=
-      """
-    And a wp-content/mu-plugins/create-image-attachment.php file:
+    Given a wp-content/mu-plugins/create-image-attachment.php file:
       """
       <?php
-      $attachment_id = wp_insert_attachment( array(
-        'post_mime_type' => 'image/png',
-        'post_title'     => 'Test Image',
-        'post_content'   => '',
-        'post_status'    => 'inherit',
-      ), '/tmp/test-image.png' );
-      wp_update_attachment_metadata( $attachment_id, wp_generate_attachment_metadata( $attachment_id, '/tmp/test-image.png' ) );
+      add_action( 'init', function() {
+        if ( get_option( 'wpcli_test_image_attachment_id' ) ) {
+          return;
+        }
+        $file_path = '/tmp/test-image.png';
+        file_put_contents( $file_path, base64_decode( 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=' ) );
+        $attachment_id = wp_insert_attachment( array(
+          'post_mime_type' => 'image/png',
+          'post_title'     => 'Test Image',
+          'post_content'   => '',
+          'post_status'    => 'inherit',
+        ), $file_path );
+        if ( ! is_wp_error( $attachment_id ) ) {
+          update_option( 'wpcli_test_image_attachment_id', $attachment_id );
+        }
+      } );
       """
 
     When I run `wp ai generate alt-text 1`
@@ -342,21 +347,27 @@ Feature: Generate AI content
       Alt text generated and saved for attachment 1:
       """
 
+  @require-wp-7.0
   Scenario: Alt-text generation with model option
-    Given a file /tmp/test-image.png with base64 content:
-      """
-      iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=
-      """
-    And a wp-content/mu-plugins/create-image-attachment.php file:
+    Given a wp-content/mu-plugins/create-image-attachment.php file:
       """
       <?php
-      $attachment_id = wp_insert_attachment( array(
-        'post_mime_type' => 'image/png',
-        'post_title'     => 'Test Image',
-        'post_content'   => '',
-        'post_status'    => 'inherit',
-      ), '/tmp/test-image.png' );
-      wp_update_attachment_metadata( $attachment_id, wp_generate_attachment_metadata( $attachment_id, '/tmp/test-image.png' ) );
+      add_action( 'init', function() {
+        if ( get_option( 'wpcli_test_image_attachment_id' ) ) {
+          return;
+        }
+        $file_path = '/tmp/test-image.png';
+        file_put_contents( $file_path, base64_decode( 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=' ) );
+        $attachment_id = wp_insert_attachment( array(
+          'post_mime_type' => 'image/png',
+          'post_title'     => 'Test Image',
+          'post_content'   => '',
+          'post_status'    => 'inherit',
+        ), $file_path );
+        if ( ! is_wp_error( $attachment_id ) ) {
+          update_option( 'wpcli_test_image_attachment_id', $attachment_id );
+        }
+      } );
       """
 
     When I run `wp ai generate alt-text 1 --model=wp-cli-mock-provider:wp-cli-mock-model`
@@ -368,20 +379,25 @@ Feature: Generate AI content
 
   @require-wp-7.0
   Scenario: Alt-text generation with provider option
-    Given a file /tmp/test-image.png with base64 content:
-      """
-      iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=
-      """
-    And a wp-content/mu-plugins/create-image-attachment.php file:
+    Given a wp-content/mu-plugins/create-image-attachment.php file:
       """
       <?php
-      $attachment_id = wp_insert_attachment( array(
-        'post_mime_type' => 'image/png',
-        'post_title'     => 'Test Image',
-        'post_content'   => '',
-        'post_status'    => 'inherit',
-      ), '/tmp/test-image.png' );
-      wp_update_attachment_metadata( $attachment_id, wp_generate_attachment_metadata( $attachment_id, '/tmp/test-image.png' ) );
+      add_action( 'init', function() {
+        if ( get_option( 'wpcli_test_image_attachment_id' ) ) {
+          return;
+        }
+        $file_path = '/tmp/test-image.png';
+        file_put_contents( $file_path, base64_decode( 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=' ) );
+        $attachment_id = wp_insert_attachment( array(
+          'post_mime_type' => 'image/png',
+          'post_title'     => 'Test Image',
+          'post_content'   => '',
+          'post_status'    => 'inherit',
+        ), $file_path );
+        if ( ! is_wp_error( $attachment_id ) ) {
+          update_option( 'wpcli_test_image_attachment_id', $attachment_id );
+        }
+      } );
       """
 
     When I run `wp ai generate alt-text 1 --provider=wp-cli-mock-provider`
@@ -393,20 +409,25 @@ Feature: Generate AI content
 
   @require-wp-7.0
   Scenario: Alt-text generation with temperature option
-    Given a file /tmp/test-image.png with base64 content:
-      """
-      iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=
-      """
-    And a wp-content/mu-plugins/create-image-attachment.php file:
+    Given a wp-content/mu-plugins/create-image-attachment.php file:
       """
       <?php
-      $attachment_id = wp_insert_attachment( array(
-        'post_mime_type' => 'image/png',
-        'post_title'     => 'Test Image',
-        'post_content'   => '',
-        'post_status'    => 'inherit',
-      ), '/tmp/test-image.png' );
-      wp_update_attachment_metadata( $attachment_id, wp_generate_attachment_metadata( $attachment_id, '/tmp/test-image.png' ) );
+      add_action( 'init', function() {
+        if ( get_option( 'wpcli_test_image_attachment_id' ) ) {
+          return;
+        }
+        $file_path = '/tmp/test-image.png';
+        file_put_contents( $file_path, base64_decode( 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=' ) );
+        $attachment_id = wp_insert_attachment( array(
+          'post_mime_type' => 'image/png',
+          'post_title'     => 'Test Image',
+          'post_content'   => '',
+          'post_status'    => 'inherit',
+        ), $file_path );
+        if ( ! is_wp_error( $attachment_id ) ) {
+          update_option( 'wpcli_test_image_attachment_id', $attachment_id );
+        }
+      } );
       """
 
     When I run `wp ai generate alt-text 1 --temperature=0.5`
@@ -418,20 +439,25 @@ Feature: Generate AI content
 
   @require-wp-7.0
   Scenario: Alt-text generation with top-p option
-    Given a file /tmp/test-image.png with base64 content:
-      """
-      iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=
-      """
-    And a wp-content/mu-plugins/create-image-attachment.php file:
+    Given a wp-content/mu-plugins/create-image-attachment.php file:
       """
       <?php
-      $attachment_id = wp_insert_attachment( array(
-        'post_mime_type' => 'image/png',
-        'post_title'     => 'Test Image',
-        'post_content'   => '',
-        'post_status'    => 'inherit',
-      ), '/tmp/test-image.png' );
-      wp_update_attachment_metadata( $attachment_id, wp_generate_attachment_metadata( $attachment_id, '/tmp/test-image.png' ) );
+      add_action( 'init', function() {
+        if ( get_option( 'wpcli_test_image_attachment_id' ) ) {
+          return;
+        }
+        $file_path = '/tmp/test-image.png';
+        file_put_contents( $file_path, base64_decode( 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=' ) );
+        $attachment_id = wp_insert_attachment( array(
+          'post_mime_type' => 'image/png',
+          'post_title'     => 'Test Image',
+          'post_content'   => '',
+          'post_status'    => 'inherit',
+        ), $file_path );
+        if ( ! is_wp_error( $attachment_id ) ) {
+          update_option( 'wpcli_test_image_attachment_id', $attachment_id );
+        }
+      } );
       """
 
     When I run `wp ai generate alt-text 1 --top-p=0.9`
@@ -443,20 +469,25 @@ Feature: Generate AI content
 
   @require-wp-7.0
   Scenario: Alt-text generation with top-k option
-    Given a file /tmp/test-image.png with base64 content:
-      """
-      iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=
-      """
-    And a wp-content/mu-plugins/create-image-attachment.php file:
+    Given a wp-content/mu-plugins/create-image-attachment.php file:
       """
       <?php
-      $attachment_id = wp_insert_attachment( array(
-        'post_mime_type' => 'image/png',
-        'post_title'     => 'Test Image',
-        'post_content'   => '',
-        'post_status'    => 'inherit',
-      ), '/tmp/test-image.png' );
-      wp_update_attachment_metadata( $attachment_id, wp_generate_attachment_metadata( $attachment_id, '/tmp/test-image.png' ) );
+      add_action( 'init', function() {
+        if ( get_option( 'wpcli_test_image_attachment_id' ) ) {
+          return;
+        }
+        $file_path = '/tmp/test-image.png';
+        file_put_contents( $file_path, base64_decode( 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=' ) );
+        $attachment_id = wp_insert_attachment( array(
+          'post_mime_type' => 'image/png',
+          'post_title'     => 'Test Image',
+          'post_content'   => '',
+          'post_status'    => 'inherit',
+        ), $file_path );
+        if ( ! is_wp_error( $attachment_id ) ) {
+          update_option( 'wpcli_test_image_attachment_id', $attachment_id );
+        }
+      } );
       """
 
     When I run `wp ai generate alt-text 1 --top-k=40`
@@ -468,20 +499,25 @@ Feature: Generate AI content
 
   @require-wp-7.0
   Scenario: Alt-text generation with max-tokens option
-    Given a file /tmp/test-image.png with base64 content:
-      """
-      iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=
-      """
-    And a wp-content/mu-plugins/create-image-attachment.php file:
+    Given a wp-content/mu-plugins/create-image-attachment.php file:
       """
       <?php
-      $attachment_id = wp_insert_attachment( array(
-        'post_mime_type' => 'image/png',
-        'post_title'     => 'Test Image',
-        'post_content'   => '',
-        'post_status'    => 'inherit',
-      ), '/tmp/test-image.png' );
-      wp_update_attachment_metadata( $attachment_id, wp_generate_attachment_metadata( $attachment_id, '/tmp/test-image.png' ) );
+      add_action( 'init', function() {
+        if ( get_option( 'wpcli_test_image_attachment_id' ) ) {
+          return;
+        }
+        $file_path = '/tmp/test-image.png';
+        file_put_contents( $file_path, base64_decode( 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=' ) );
+        $attachment_id = wp_insert_attachment( array(
+          'post_mime_type' => 'image/png',
+          'post_title'     => 'Test Image',
+          'post_content'   => '',
+          'post_status'    => 'inherit',
+        ), $file_path );
+        if ( ! is_wp_error( $attachment_id ) ) {
+          update_option( 'wpcli_test_image_attachment_id', $attachment_id );
+        }
+      } );
       """
 
     When I run `wp ai generate alt-text 1 --max-tokens=100`
@@ -493,20 +529,25 @@ Feature: Generate AI content
 
   @require-wp-7.0
   Scenario: Alt-text generation with custom system instruction
-    Given a file /tmp/test-image.png with base64 content:
-      """
-      iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=
-      """
-    And a wp-content/mu-plugins/create-image-attachment.php file:
+    Given a wp-content/mu-plugins/create-image-attachment.php file:
       """
       <?php
-      $attachment_id = wp_insert_attachment( array(
-        'post_mime_type' => 'image/png',
-        'post_title'     => 'Test Image',
-        'post_content'   => '',
-        'post_status'    => 'inherit',
-      ), '/tmp/test-image.png' );
-      wp_update_attachment_metadata( $attachment_id, wp_generate_attachment_metadata( $attachment_id, '/tmp/test-image.png' ) );
+      add_action( 'init', function() {
+        if ( get_option( 'wpcli_test_image_attachment_id' ) ) {
+          return;
+        }
+        $file_path = '/tmp/test-image.png';
+        file_put_contents( $file_path, base64_decode( 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=' ) );
+        $attachment_id = wp_insert_attachment( array(
+          'post_mime_type' => 'image/png',
+          'post_title'     => 'Test Image',
+          'post_content'   => '',
+          'post_status'    => 'inherit',
+        ), $file_path );
+        if ( ! is_wp_error( $attachment_id ) ) {
+          update_option( 'wpcli_test_image_attachment_id', $attachment_id );
+        }
+      } );
       """
 
     When I run `wp ai generate alt-text 1 --system-instruction="Describe image in one sentence"`
