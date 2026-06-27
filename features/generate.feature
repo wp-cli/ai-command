@@ -58,7 +58,7 @@ Feature: Generate AI content
               new SupportedOption(OptionEnum::candidateCount()),
               new SupportedOption(OptionEnum::outputMimeType(), ['image/png']),
               new SupportedOption(OptionEnum::outputFileType(), [FileTypeEnum::inline()]),
-              new SupportedOption(OptionEnum::inputModalities(), [[ModalityEnum::text()]]),
+              new SupportedOption(OptionEnum::inputModalities(), [[ModalityEnum::text()], [ModalityEnum::image()], [ModalityEnum::text(), ModalityEnum::image()]]),
               new SupportedOption(
                 OptionEnum::outputModalities(),
                 [
