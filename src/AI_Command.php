@@ -51,10 +51,11 @@ class AI_Command extends WP_CLI_Command {
 	 * options:
 	 *   - text
 	 *   - image
+	 *   - alt-text
 	 * ---
 	 *
 	 * <prompt>
-	 * : The prompt to send to the AI.
+	 * : The prompt to send to the AI, or attachment ID for alt-text generation.
 	 *
 	 * [--model=<models>]
 	 * : Comma-separated list of models in order of preference. Format: "provider,model" (e.g., "openai,gpt-4" or "openai,gpt-4,anthropic,claude-3").
@@ -112,6 +113,9 @@ class AI_Command extends WP_CLI_Command {
 	 *     # Generate image
 	 *     $ wp ai generate image "A minimalist WordPress logo" --output=wp-logo.png
 	 *
+	 *     # Generate alt text for an attachment
+	 *     $ wp ai generate alt-text 123
+	 *
 	 * @param array{0: string, 1: string} $args Positional arguments.
 	 * @param array{model: string, provider: string, temperature: float, 'top-p': float, 'top-k': int, 'max-tokens': int, 'system-instruction': string, 'destination-file': string, stdout: bool, format: string} $assoc_args Associative arguments.
 	 * @return void
@@ -122,6 +126,11 @@ class AI_Command extends WP_CLI_Command {
 		// @phpstan-ignore function.notFound
 		if ( ! wp_supports_ai() ) {
 			WP_CLI::error( 'AI features are not supported in this environment.' );
+		}
+
+		if ( 'alt-text' === $type ) {
+			$this->generate_alt_text( $prompt, $assoc_args );
+			return;
 		}
 
 		try {
@@ -502,6 +511,142 @@ class AI_Command extends WP_CLI_Command {
 			WP_CLI::log( $image_data );
 		} else {
 			WP_CLI::line( (string) $image_file->getDataUri() );
+		}
+	}
+
+	/**
+	 * Generates alt text for an image attachment using AI.
+	 *
+	 * @param string                       $attachment_id The attachment ID.
+	 * @param array{model: string, provider: string, temperature: float, 'top-p': float, 'top-k': int, 'max-tokens': int, 'system-instruction': string, format: string} $assoc_args Associative arguments.
+	 * @return void
+	 */
+	private function generate_alt_text( $attachment_id, $assoc_args ) {
+		$id = (int) $attachment_id;
+
+		if ( $id <= 0 ) {
+			WP_CLI::error( 'Invalid attachment ID.' );
+		}
+
+		// Validate attachment exists and is an image.
+		$attachment = get_post( $id );
+		if ( ! $attachment || 'attachment' !== $attachment->post_type ) {
+			WP_CLI::error( sprintf( 'Attachment with ID %d not found.', $id ) );
+		}
+
+		if ( ! wp_attachment_is_image( $id ) ) {
+			WP_CLI::error( sprintf( 'Attachment with ID %d is not an image.', $id ) );
+		}
+
+		try {
+			$file_path = get_attached_file( $id );
+			if ( ! $file_path ) {
+				WP_CLI::error( 'Unable to retrieve image file path.' );
+			}
+
+			if ( ! file_exists( $file_path ) ) {
+				WP_CLI::error( sprintf( 'Image file not found: %s', $file_path ) );
+			}
+
+			// Convert image file to data URI.
+			$mime_info = wp_check_filetype( $file_path );
+			$mime_type = $mime_info['type'];
+			if ( ! $mime_type ) {
+				WP_CLI::error( 'Unable to determine image mime type.' );
+			}
+
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+			$contents = file_get_contents( $file_path );
+			if ( false === $contents ) {
+				WP_CLI::error( 'Unable to read image file.' );
+			}
+
+			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+			$data_uri = 'data:' . $mime_type . ';base64,' . base64_encode( $contents );
+
+			// @phpstan-ignore function.notFound
+			$builder = wp_ai_client_prompt( 'Generate alt text for this image.' )
+				->with_file( $data_uri );
+
+			if ( is_wp_error( $builder ) ) {
+				WP_CLI::error( $builder->get_error_message() );
+			}
+
+			if ( isset( $assoc_args['provider'] ) ) {
+				$builder = $builder->using_provider( $assoc_args['provider'] );
+			}
+
+			if ( isset( $assoc_args['model'] ) ) {
+				$model_preferences = explode( ',', $assoc_args['model'] );
+				foreach ( $model_preferences as $value ) {
+					$value = explode( ':', $value );
+
+					if ( count( $value ) !== 2 ) {
+						WP_CLI::error( 'Model must be in format "provider:model" pairs (e.g., "openai:gpt-4" or "openai:gpt-4,anthropic:claude-3").' );
+					}
+				}
+
+				$builder = $builder->using_model_preference( ...$model_preferences );
+			}
+
+			if ( isset( $assoc_args['temperature'] ) ) {
+				$builder = $builder->using_temperature( (float) $assoc_args['temperature'] );
+			}
+
+			if ( isset( $assoc_args['top-p'] ) ) {
+				$top_p = (float) $assoc_args['top-p'];
+				if ( $top_p < 0.0 || $top_p > 1.0 ) {
+					WP_CLI::error( 'Top-p must be between 0.0 and 1.0.' );
+				}
+				$builder = $builder->using_top_p( $top_p );
+			}
+
+			if ( isset( $assoc_args['top-k'] ) ) {
+				$top_k = (int) $assoc_args['top-k'];
+				if ( $top_k <= 0 ) {
+					WP_CLI::error( 'Top-k must be a positive integer.' );
+				}
+				$builder = $builder->using_top_k( $top_k );
+			}
+
+			if ( isset( $assoc_args['max-tokens'] ) ) {
+				$max_tokens = (int) $assoc_args['max-tokens'];
+				if ( $max_tokens <= 0 ) {
+					WP_CLI::error( 'Max tokens must be a positive integer.' );
+				}
+				$builder = $builder->using_max_tokens( $max_tokens );
+			}
+
+			if ( isset( $assoc_args['system-instruction'] ) ) {
+				$builder = $builder->using_system_instruction( $assoc_args['system-instruction'] );
+			} else {
+				$builder = $builder->using_system_instruction( 'Keep the alt text under 125 characters and descriptive.' );
+			}
+
+			if ( ! $builder->is_supported_for_text_generation() ) {
+				WP_CLI::error( 'Text generation with image input is not supported. Make sure AI provider credentials are configured and support vision models.' );
+			}
+
+			$result = $builder->generate_text();
+
+			if ( is_wp_error( $result ) ) {
+				WP_CLI::error( $result->get_error_message() );
+			}
+
+			$alt_text = trim( $result );
+
+			// Truncate to 125 characters as per spec.
+			if ( strlen( $alt_text ) > 125 ) {
+				$alt_text = substr( $alt_text, 0, 125 );
+			}
+
+			// Update attachment metadata.
+			update_post_meta( $id, '_wp_attachment_image_alt', $alt_text );
+
+			WP_CLI::success( sprintf( 'Alt text generated and saved for attachment %d: %s', $id, $alt_text ) );
+
+		} catch ( \Exception $e ) {
+			WP_CLI::error( 'Alt text generation failed: ' . $e->getMessage() );
 		}
 	}
 }

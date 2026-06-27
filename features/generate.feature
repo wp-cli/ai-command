@@ -274,3 +274,22 @@ Feature: Generate AI content
       """
       data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=
       """
+
+  @require-wp-7.0
+  Scenario: Generate alt text for attachment with invalid ID
+    When I try `wp ai generate alt-text invalid`
+    Then the return code should be 1
+    And STDERR should contain:
+      """
+      Invalid attachment ID.
+      """
+
+  @require-wp-7.0
+  Scenario: Generate alt text for non-existent attachment
+    When I try `wp ai generate alt-text 9999`
+    Then the return code should be 1
+    And STDERR should contain:
+      """
+      Attachment with ID 9999 not found.
+      """
+
