@@ -298,7 +298,7 @@ Feature: Generate AI content
     Given a WP install
     When I run `wp post create --post_type=post --post_title="Test Post" --porcelain`
     And save STDOUT as {POST_ID}
-    When I try `wp ai generate alt-text {POST_ID}`
+    And I try `wp ai generate alt-text {POST_ID}`
     Then the return code should be 1
     And STDERR should contain:
       """
