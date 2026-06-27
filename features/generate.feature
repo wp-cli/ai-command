@@ -56,6 +56,11 @@ Feature: Generate AI content
             // Supported options.
             [
               new SupportedOption(OptionEnum::candidateCount()),
+              new SupportedOption(OptionEnum::systemInstruction()),
+              new SupportedOption(OptionEnum::temperature()),
+              new SupportedOption(OptionEnum::topP()),
+              new SupportedOption(OptionEnum::topK()),
+              new SupportedOption(OptionEnum::maxTokens()),
               new SupportedOption(OptionEnum::outputMimeType(), ['image/png']),
               new SupportedOption(OptionEnum::outputFileType(), [FileTypeEnum::inline()]),
               new SupportedOption(OptionEnum::inputModalities(), [[ModalityEnum::text()], [ModalityEnum::image()], [ModalityEnum::text(), ModalityEnum::image()]]),
@@ -67,8 +72,6 @@ Feature: Generate AI content
                     [ModalityEnum::text(), ModalityEnum::image()],
                 ]
               ),
-              new SupportedOption(OptionEnum::candidateCount()),
-              new SupportedOption(OptionEnum::outputMimeType(), ['image/png']),
               new SupportedOption(OptionEnum::outputFileType(), [FileTypeEnum::inline(), FileTypeEnum::remote()]),
               new SupportedOption(OptionEnum::outputMediaOrientation(), [
                 MediaOrientationEnum::square(),
