@@ -319,241 +319,89 @@ Feature: Generate AI content
 
   @require-wp-7.0
   Scenario: Generates alt text for image attachment
-    Given a wp-content/mu-plugins/create-image-attachment.php file:
-      """
-      <?php
-      add_action( 'init', function() {
-        if ( get_option( 'wpcli_test_image_attachment_id' ) ) {
-          return;
-        }
-        $file_path = '/tmp/test-image.png';
-        file_put_contents( $file_path, base64_decode( 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=' ) );
-        $attachment_id = wp_insert_attachment( array(
-          'post_mime_type' => 'image/png',
-          'post_title'     => 'Test Image',
-          'post_content'   => '',
-          'post_status'    => 'inherit',
-        ), $file_path );
-        if ( ! is_wp_error( $attachment_id ) ) {
-          update_option( 'wpcli_test_image_attachment_id', $attachment_id );
-        }
-      } );
-      """
-
-    When I run `wp ai generate alt-text 1`
+    When I run `wp eval 'file_put_contents("/tmp/t.png",base64_decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=")); echo wp_insert_attachment(array("post_mime_type"=>"image/png","post_title"=>"Test","post_status"=>"inherit","post_content"=>""),"/tmp/t.png");'`
+    And save STDOUT as {ATTACHMENT_ID}
+    And I run `wp ai generate alt-text {ATTACHMENT_ID}`
     Then the return code should be 0
     And STDOUT should contain:
       """
-      Alt text generated and saved for attachment 1:
+      Alt text generated and saved for attachment
       """
 
   @require-wp-7.0
   Scenario: Alt-text generation with model option
-    Given a wp-content/mu-plugins/create-image-attachment.php file:
-      """
-      <?php
-      add_action( 'init', function() {
-        if ( get_option( 'wpcli_test_image_attachment_id' ) ) {
-          return;
-        }
-        $file_path = '/tmp/test-image.png';
-        file_put_contents( $file_path, base64_decode( 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=' ) );
-        $attachment_id = wp_insert_attachment( array(
-          'post_mime_type' => 'image/png',
-          'post_title'     => 'Test Image',
-          'post_content'   => '',
-          'post_status'    => 'inherit',
-        ), $file_path );
-        if ( ! is_wp_error( $attachment_id ) ) {
-          update_option( 'wpcli_test_image_attachment_id', $attachment_id );
-        }
-      } );
-      """
-
-    When I run `wp ai generate alt-text 1 --model=wp-cli-mock-provider:wp-cli-mock-model`
+    When I run `wp eval 'file_put_contents("/tmp/t.png",base64_decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=")); echo wp_insert_attachment(array("post_mime_type"=>"image/png","post_title"=>"Test","post_status"=>"inherit","post_content"=>""),"/tmp/t.png");'`
+    And save STDOUT as {ATTACHMENT_ID}
+    And I run `wp ai generate alt-text {ATTACHMENT_ID} --model=wp-cli-mock-provider:wp-cli-mock-model`
     Then the return code should be 0
     And STDOUT should contain:
       """
-      Alt text generated and saved for attachment 1:
+      Alt text generated and saved for attachment
       """
 
   @require-wp-7.0
   Scenario: Alt-text generation with provider option
-    Given a wp-content/mu-plugins/create-image-attachment.php file:
-      """
-      <?php
-      add_action( 'init', function() {
-        if ( get_option( 'wpcli_test_image_attachment_id' ) ) {
-          return;
-        }
-        $file_path = '/tmp/test-image.png';
-        file_put_contents( $file_path, base64_decode( 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=' ) );
-        $attachment_id = wp_insert_attachment( array(
-          'post_mime_type' => 'image/png',
-          'post_title'     => 'Test Image',
-          'post_content'   => '',
-          'post_status'    => 'inherit',
-        ), $file_path );
-        if ( ! is_wp_error( $attachment_id ) ) {
-          update_option( 'wpcli_test_image_attachment_id', $attachment_id );
-        }
-      } );
-      """
-
-    When I run `wp ai generate alt-text 1 --provider=wp-cli-mock-provider`
+    When I run `wp eval 'file_put_contents("/tmp/t.png",base64_decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=")); echo wp_insert_attachment(array("post_mime_type"=>"image/png","post_title"=>"Test","post_status"=>"inherit","post_content"=>""),"/tmp/t.png");'`
+    And save STDOUT as {ATTACHMENT_ID}
+    And I run `wp ai generate alt-text {ATTACHMENT_ID} --provider=wp-cli-mock-provider`
     Then the return code should be 0
     And STDOUT should contain:
       """
-      Alt text generated and saved for attachment 1:
+      Alt text generated and saved for attachment
       """
 
   @require-wp-7.0
   Scenario: Alt-text generation with temperature option
-    Given a wp-content/mu-plugins/create-image-attachment.php file:
-      """
-      <?php
-      add_action( 'init', function() {
-        if ( get_option( 'wpcli_test_image_attachment_id' ) ) {
-          return;
-        }
-        $file_path = '/tmp/test-image.png';
-        file_put_contents( $file_path, base64_decode( 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=' ) );
-        $attachment_id = wp_insert_attachment( array(
-          'post_mime_type' => 'image/png',
-          'post_title'     => 'Test Image',
-          'post_content'   => '',
-          'post_status'    => 'inherit',
-        ), $file_path );
-        if ( ! is_wp_error( $attachment_id ) ) {
-          update_option( 'wpcli_test_image_attachment_id', $attachment_id );
-        }
-      } );
-      """
-
-    When I run `wp ai generate alt-text 1 --temperature=0.5`
+    When I run `wp eval 'file_put_contents("/tmp/t.png",base64_decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=")); echo wp_insert_attachment(array("post_mime_type"=>"image/png","post_title"=>"Test","post_status"=>"inherit","post_content"=>""),"/tmp/t.png");'`
+    And save STDOUT as {ATTACHMENT_ID}
+    And I run `wp ai generate alt-text {ATTACHMENT_ID} --temperature=0.5`
     Then the return code should be 0
     And STDOUT should contain:
       """
-      Alt text generated and saved for attachment 1:
+      Alt text generated and saved for attachment
       """
 
   @require-wp-7.0
   Scenario: Alt-text generation with top-p option
-    Given a wp-content/mu-plugins/create-image-attachment.php file:
-      """
-      <?php
-      add_action( 'init', function() {
-        if ( get_option( 'wpcli_test_image_attachment_id' ) ) {
-          return;
-        }
-        $file_path = '/tmp/test-image.png';
-        file_put_contents( $file_path, base64_decode( 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=' ) );
-        $attachment_id = wp_insert_attachment( array(
-          'post_mime_type' => 'image/png',
-          'post_title'     => 'Test Image',
-          'post_content'   => '',
-          'post_status'    => 'inherit',
-        ), $file_path );
-        if ( ! is_wp_error( $attachment_id ) ) {
-          update_option( 'wpcli_test_image_attachment_id', $attachment_id );
-        }
-      } );
-      """
-
-    When I run `wp ai generate alt-text 1 --top-p=0.9`
+    When I run `wp eval 'file_put_contents("/tmp/t.png",base64_decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=")); echo wp_insert_attachment(array("post_mime_type"=>"image/png","post_title"=>"Test","post_status"=>"inherit","post_content"=>""),"/tmp/t.png");'`
+    And save STDOUT as {ATTACHMENT_ID}
+    And I run `wp ai generate alt-text {ATTACHMENT_ID} --top-p=0.9`
     Then the return code should be 0
     And STDOUT should contain:
       """
-      Alt text generated and saved for attachment 1:
+      Alt text generated and saved for attachment
       """
 
   @require-wp-7.0
   Scenario: Alt-text generation with top-k option
-    Given a wp-content/mu-plugins/create-image-attachment.php file:
-      """
-      <?php
-      add_action( 'init', function() {
-        if ( get_option( 'wpcli_test_image_attachment_id' ) ) {
-          return;
-        }
-        $file_path = '/tmp/test-image.png';
-        file_put_contents( $file_path, base64_decode( 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=' ) );
-        $attachment_id = wp_insert_attachment( array(
-          'post_mime_type' => 'image/png',
-          'post_title'     => 'Test Image',
-          'post_content'   => '',
-          'post_status'    => 'inherit',
-        ), $file_path );
-        if ( ! is_wp_error( $attachment_id ) ) {
-          update_option( 'wpcli_test_image_attachment_id', $attachment_id );
-        }
-      } );
-      """
-
-    When I run `wp ai generate alt-text 1 --top-k=40`
+    When I run `wp eval 'file_put_contents("/tmp/t.png",base64_decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=")); echo wp_insert_attachment(array("post_mime_type"=>"image/png","post_title"=>"Test","post_status"=>"inherit","post_content"=>""),"/tmp/t.png");'`
+    And save STDOUT as {ATTACHMENT_ID}
+    And I run `wp ai generate alt-text {ATTACHMENT_ID} --top-k=40`
     Then the return code should be 0
     And STDOUT should contain:
       """
-      Alt text generated and saved for attachment 1:
+      Alt text generated and saved for attachment
       """
 
   @require-wp-7.0
   Scenario: Alt-text generation with max-tokens option
-    Given a wp-content/mu-plugins/create-image-attachment.php file:
-      """
-      <?php
-      add_action( 'init', function() {
-        if ( get_option( 'wpcli_test_image_attachment_id' ) ) {
-          return;
-        }
-        $file_path = '/tmp/test-image.png';
-        file_put_contents( $file_path, base64_decode( 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=' ) );
-        $attachment_id = wp_insert_attachment( array(
-          'post_mime_type' => 'image/png',
-          'post_title'     => 'Test Image',
-          'post_content'   => '',
-          'post_status'    => 'inherit',
-        ), $file_path );
-        if ( ! is_wp_error( $attachment_id ) ) {
-          update_option( 'wpcli_test_image_attachment_id', $attachment_id );
-        }
-      } );
-      """
-
-    When I run `wp ai generate alt-text 1 --max-tokens=100`
+    When I run `wp eval 'file_put_contents("/tmp/t.png",base64_decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=")); echo wp_insert_attachment(array("post_mime_type"=>"image/png","post_title"=>"Test","post_status"=>"inherit","post_content"=>""),"/tmp/t.png");'`
+    And save STDOUT as {ATTACHMENT_ID}
+    And I run `wp ai generate alt-text {ATTACHMENT_ID} --max-tokens=100`
     Then the return code should be 0
     And STDOUT should contain:
       """
-      Alt text generated and saved for attachment 1:
+      Alt text generated and saved for attachment
       """
 
   @require-wp-7.0
   Scenario: Alt-text generation with custom system instruction
-    Given a wp-content/mu-plugins/create-image-attachment.php file:
-      """
-      <?php
-      add_action( 'init', function() {
-        if ( get_option( 'wpcli_test_image_attachment_id' ) ) {
-          return;
-        }
-        $file_path = '/tmp/test-image.png';
-        file_put_contents( $file_path, base64_decode( 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=' ) );
-        $attachment_id = wp_insert_attachment( array(
-          'post_mime_type' => 'image/png',
-          'post_title'     => 'Test Image',
-          'post_content'   => '',
-          'post_status'    => 'inherit',
-        ), $file_path );
-        if ( ! is_wp_error( $attachment_id ) ) {
-          update_option( 'wpcli_test_image_attachment_id', $attachment_id );
-        }
-      } );
-      """
-
-    When I run `wp ai generate alt-text 1 --system-instruction="Describe image in one sentence"`
+    When I run `wp eval 'file_put_contents("/tmp/t.png",base64_decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=")); echo wp_insert_attachment(array("post_mime_type"=>"image/png","post_title"=>"Test","post_status"=>"inherit","post_content"=>""),"/tmp/t.png");'`
+    And save STDOUT as {ATTACHMENT_ID}
+    And I run `wp ai generate alt-text {ATTACHMENT_ID} --system-instruction="Describe image in one sentence"`
     Then the return code should be 0
     And STDOUT should contain:
       """
-      Alt text generated and saved for attachment 1:
+      Alt text generated and saved for attachment
       """
 
