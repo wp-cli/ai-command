@@ -1,4 +1,6 @@
 default:
+  autoload:
+    "WP_CLI\\AI\\Tests\\": "tests/"
   suites:
     default:
       contexts:
