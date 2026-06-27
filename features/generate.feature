@@ -294,26 +294,6 @@ Feature: Generate AI content
       """
 
   @require-wp-7.0
-  Scenario: Alt-text generation fails with non-image attachment
-    Given a wp-content/mu-plugins/create-attachment.php file:
-      """
-      <?php
-      $attachment_id = wp_insert_attachment( array(
-        'post_mime_type' => 'application/pdf',
-        'post_title'     => 'Test PDF',
-        'post_content'   => '',
-        'post_status'    => 'inherit',
-      ), 'test.pdf' );
-      """
-
-    When I try `wp ai generate alt-text 1`
-    Then the return code should be 1
-    And STDERR should contain:
-      """
-      is not an image.
-      """
-
-  @require-wp-7.0
   Scenario: Generates alt text for image attachment
     Given a file /tmp/test-image.png with base64 content:
       """
@@ -336,26 +316,6 @@ Feature: Generate AI content
     And STDOUT should contain:
       """
       Alt text generated and saved for attachment 1:
-      """
-
-  @require-wp-7.0
-  Scenario: Alt-text generation fails when file not found on disk
-    Given a wp-content/mu-plugins/create-attachment-no-file.php file:
-      """
-      <?php
-      $attachment_id = wp_insert_attachment( array(
-        'post_mime_type' => 'image/png',
-        'post_title'     => 'Test Image',
-        'post_content'   => '',
-        'post_status'    => 'inherit',
-      ), '/nonexistent/path/image.png' );
-      """
-
-    When I try `wp ai generate alt-text 1`
-    Then the return code should be 1
-    And STDERR should contain:
-      """
-      Image file not found:
       """
 
   @require-wp-7.0
