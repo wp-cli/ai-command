@@ -308,3 +308,48 @@ Feature: Generate AI content
       Alt text generated and saved for attachment
       """
 
+  @require-wp-7.0
+  Scenario: Generate alt text with provider option
+    Given a file /tmp/test-image.png with base64 content:
+      """
+      iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=
+      """
+    When I run `wp media import /tmp/test-image.png --post_id=0 --porcelain`
+    And save STDOUT as {ATTACHMENT_ID}
+    And I run `wp ai generate alt-text {ATTACHMENT_ID} --provider=wp-cli-mock-provider`
+    Then the return code should be 0
+    And STDOUT should contain:
+      """
+      Alt text generated and saved for attachment
+      """
+
+  @require-wp-7.0
+  Scenario: Generate alt text with temperature option
+    Given a file /tmp/test-image.png with base64 content:
+      """
+      iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=
+      """
+    When I run `wp media import /tmp/test-image.png --post_id=0 --porcelain`
+    And save STDOUT as {ATTACHMENT_ID}
+    And I run `wp ai generate alt-text {ATTACHMENT_ID} --temperature=0.5`
+    Then the return code should be 0
+    And STDOUT should contain:
+      """
+      Alt text generated and saved for attachment
+      """
+
+  @require-wp-7.0
+  Scenario: Generate alt text with system instruction
+    Given a file /tmp/test-image.png with base64 content:
+      """
+      iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=
+      """
+    When I run `wp media import /tmp/test-image.png --post_id=0 --porcelain`
+    And save STDOUT as {ATTACHMENT_ID}
+    And I run `wp ai generate alt-text {ATTACHMENT_ID} --system-instruction="Be concise"`
+    Then the return code should be 0
+    And STDOUT should contain:
+      """
+      Alt text generated and saved for attachment
+      """
+
