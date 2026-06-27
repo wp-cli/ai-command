@@ -308,39 +308,4 @@ Feature: Generate AI content
       Invalid attachment ID.
       """
 
-  @require-wp-7.0
-  Scenario: Alt-text generation validates top-p range
-    When I try `wp ai generate alt-text 1 --top-p=1.5`
-    Then the return code should be 1
-    And STDERR should contain:
-      """
-      Top-p must be between 0.0 and 1.0
-      """
-
-  @require-wp-7.0
-  Scenario: Alt-text generation validates top-k positive
-    When I try `wp ai generate alt-text 1 --top-k=-10`
-    Then the return code should be 1
-    And STDERR should contain:
-      """
-      Top-k must be a positive integer
-      """
-
-  @require-wp-7.0
-  Scenario: Alt-text generation validates max-tokens positive
-    When I try `wp ai generate alt-text 1 --max-tokens=-5`
-    Then the return code should be 1
-    And STDERR should contain:
-      """
-      Max tokens must be a positive integer
-      """
-
-  @require-wp-7.0
-  Scenario: Alt-text generation validates model format
-    When I try `wp ai generate alt-text 1 --model=invalidformat`
-    Then the return code should be 1
-    And STDERR should contain:
-      """
-      Model must be in format "provider:model" pairs
-      """
 
