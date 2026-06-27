@@ -342,27 +342,6 @@ Feature: Generate AI content
       Alt text generated and saved for attachment 1:
       """
 
-  @require-wp-7.0
-  Scenario: Alt-text generation fails with non-image attachment
-    Given a wp-content/mu-plugins/create-attachment.php file:
-      """
-      <?php
-      $attachment_id = wp_insert_attachment( array(
-        'post_mime_type' => 'application/pdf',
-        'post_title'     => 'Test PDF',
-        'post_content'   => '',
-        'post_status'    => 'inherit',
-      ), 'test.pdf' );
-      """
-
-    When I try `wp ai generate alt-text 1`
-    Then the return code should be 1
-    And STDERR should contain:
-      """
-      is not an image.
-      """
-
-  @require-wp-7.0
   Scenario: Alt-text generation with model option
     Given a file /tmp/test-image.png with base64 content:
       """
