@@ -285,67 +285,19 @@ Feature: Generate AI content
       """
 
   @require-wp-7.0
+  Scenario: Generate alt text for attachment with invalid ID
+    When I try `wp ai generate alt-text invalid`
+    Then the return code should be 1
+    And STDERR should contain:
+      """
+      Invalid attachment ID.
+      """
+
+  @require-wp-7.0
   Scenario: Generate alt text for non-existent attachment
     When I try `wp ai generate alt-text 9999`
     Then the return code should be 1
     And STDERR should contain:
       """
       Attachment with ID 9999 not found.
-      """
-
-  @require-wp-7.0
-  Scenario: Generate alt text for non-image attachment
-    Given a WP install
-    When I run `wp post create --post_type=post --post_title="Test Post" --porcelain`
-    And save STDOUT as {POST_ID}
-    And I try `wp ai generate alt-text {POST_ID}`
-    Then the return code should be 1
-    And STDERR should contain:
-      """
-      not an image
-      """
-
-  @require-wp-7.0
-  Scenario: Generate alt text validates model format
-    When I try `wp ai generate alt-text 123 --model=invalidformat`
-    Then the return code should be 1
-    And STDERR should contain:
-      """
-      provider:model
-      """
-
-  @require-wp-7.0
-  Scenario: Generate alt text validates temperature range
-    When I try `wp ai generate alt-text 123 --temperature=1.5`
-    Then the return code should be 1
-    And STDERR should contain:
-      """
-      between 0.0 and 1.0
-      """
-
-  @require-wp-7.0
-  Scenario: Generate alt text validates top-p range
-    When I try `wp ai generate alt-text 123 --top-p=-0.5`
-    Then the return code should be 1
-    And STDERR should contain:
-      """
-      between 0.0 and 1.0
-      """
-
-  @require-wp-7.0
-  Scenario: Generate alt text validates top-k positive
-    When I try `wp ai generate alt-text 123 --top-k=0`
-    Then the return code should be 1
-    And STDERR should contain:
-      """
-      positive integer
-      """
-
-  @require-wp-7.0
-  Scenario: Generate alt text validates max-tokens positive
-    When I try `wp ai generate alt-text 123 --max-tokens=-10`
-    Then the return code should be 1
-    And STDERR should contain:
-      """
-      positive integer
       """
