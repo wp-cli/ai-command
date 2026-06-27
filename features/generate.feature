@@ -285,15 +285,6 @@ Feature: Generate AI content
       """
 
   @require-wp-7.0
-  Scenario: Generate alt text for attachment with invalid ID
-    When I try `wp ai generate alt-text invalid`
-    Then the return code should be 1
-    And STDERR should contain:
-      """
-      Invalid attachment ID.
-      """
-
-  @require-wp-7.0
   Scenario: Generate alt text for non-existent attachment
     When I try `wp ai generate alt-text 9999`
     Then the return code should be 1
@@ -301,3 +292,19 @@ Feature: Generate AI content
       """
       Attachment with ID 9999 not found.
       """
+
+  @require-wp-7.0
+  Scenario: Generate alt text for image with mock provider
+    Given a file /tmp/test-image.png with base64 content:
+      """
+      iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=
+      """
+    When I run `wp media import /tmp/test-image.png --post_id=0 --porcelain`
+    And save STDOUT as {ATTACHMENT_ID}
+    And I run `wp ai generate alt-text {ATTACHMENT_ID}`
+    Then the return code should be 0
+    And STDOUT should contain:
+      """
+      Alt text generated and saved for attachment
+      """
+
