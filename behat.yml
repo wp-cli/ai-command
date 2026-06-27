@@ -2,6 +2,6 @@ default:
   suites:
     default:
       contexts:
-        - WP_CLI\Tests\Context\FeatureContext
+        - Tests\Context\FeatureContext
       paths:
         - features

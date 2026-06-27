@@ -46,6 +46,11 @@
             "ai-command.php"
         ]
     },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\Context\\": "tests/Context/"
+        }
+    },
     "minimum-stability": "dev",
     "prefer-stable": true,
     "scripts": {
