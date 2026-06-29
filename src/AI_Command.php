@@ -110,7 +110,7 @@ class AI_Command extends WP_CLI_Command {
 	 *     $ wp ai generate text "Explain AI" --system-instruction="Explain as if to a 5-year-old"
 	 *
 	 *     # Generate image
-	 *     $ wp ai generate image "A minimalist WordPress logo" --output=wp-logo.png
+	 *     $ wp ai generate image "A minimalist WordPress logo" --destination-file=wp-logo.png
 	 *
 	 * @param array{0: string, 1: string} $args Positional arguments.
 	 * @param array{model: string, provider: string, temperature: float, 'top-p': float, 'top-k': int, 'max-tokens': int, 'system-instruction': string, 'destination-file': string, stdout: bool, format: string} $assoc_args Associative arguments.
