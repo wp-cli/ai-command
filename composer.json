@@ -46,6 +46,11 @@
             "ai-command.php"
         ]
     },
+    "autoload-dev": {
+        "psr-4": {
+            "WP_CLI\\AI\\Tests\\": "tests/"
+        }
+    },
     "minimum-stability": "dev",
     "prefer-stable": true,
     "scripts": {

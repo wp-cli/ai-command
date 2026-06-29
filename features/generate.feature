@@ -56,9 +56,14 @@ Feature: Generate AI content
             // Supported options.
             [
               new SupportedOption(OptionEnum::candidateCount()),
+              new SupportedOption(OptionEnum::systemInstruction()),
+              new SupportedOption(OptionEnum::temperature()),
+              new SupportedOption(OptionEnum::topP()),
+              new SupportedOption(OptionEnum::topK()),
+              new SupportedOption(OptionEnum::maxTokens()),
               new SupportedOption(OptionEnum::outputMimeType(), ['image/png']),
               new SupportedOption(OptionEnum::outputFileType(), [FileTypeEnum::inline()]),
-              new SupportedOption(OptionEnum::inputModalities(), [[ModalityEnum::text()]]),
+              new SupportedOption(OptionEnum::inputModalities(), [[ModalityEnum::text()], [ModalityEnum::image()], [ModalityEnum::text(), ModalityEnum::image()]]),
               new SupportedOption(
                 OptionEnum::outputModalities(),
                 [
@@ -67,8 +72,6 @@ Feature: Generate AI content
                     [ModalityEnum::text(), ModalityEnum::image()],
                 ]
               ),
-              new SupportedOption(OptionEnum::candidateCount()),
-              new SupportedOption(OptionEnum::outputMimeType(), ['image/png']),
               new SupportedOption(OptionEnum::outputFileType(), [FileTypeEnum::inline(), FileTypeEnum::remote()]),
               new SupportedOption(OptionEnum::outputMediaOrientation(), [
                 MediaOrientationEnum::square(),
@@ -274,3 +277,134 @@ Feature: Generate AI content
       """
       data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=
       """
+
+  @less-than-wp-7.0
+  Scenario: Alt-text generation not available on WP < 7.0
+    When I try `wp ai generate alt-text 1`
+    Then STDERR should contain:
+      """
+      Requires WordPress 7.0 or greater.
+      """
+    And the return code should be 1
+
+  @require-wp-7.0
+  Scenario: Alt-text generation fails when AI is disabled
+    Given a wp-content/mu-plugins/disable-ai.php file:
+      """
+      <?php
+      add_filter( 'wp_supports_ai', '__return_false' );
+      """
+
+    When I try `wp ai generate alt-text 1`
+    Then the return code should be 1
+    And STDERR should contain:
+      """
+      AI features are not supported in this environment.
+      """
+
+  @require-wp-7.0
+  Scenario: Alt-text generation fails with invalid attachment ID
+    When I try `wp ai generate alt-text invalid`
+    Then the return code should be 1
+    And STDERR should contain:
+      """
+      Invalid attachment ID.
+      """
+
+  @require-wp-7.0
+  Scenario: Alt-text generation fails with non-existent attachment ID
+    When I try `wp ai generate alt-text 999`
+    Then the return code should be 1
+    And STDERR should contain:
+      """
+      Attachment with ID 999 not found.
+      """
+
+  @require-wp-7.0
+  Scenario: Generates alt text for image attachment
+    When I run `wp eval 'file_put_contents("/tmp/t.png",base64_decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=")); echo wp_insert_attachment(array("post_mime_type"=>"image/png","post_title"=>"Test","post_status"=>"inherit","post_content"=>""),"/tmp/t.png");'`
+    And save STDOUT as {ATTACHMENT_ID}
+    And I run `wp ai generate alt-text {ATTACHMENT_ID}`
+    Then the return code should be 0
+    And STDOUT should contain:
+      """
+      Alt text generated and saved for attachment
+      """
+
+  @require-wp-7.0
+  Scenario: Alt-text generation with model option
+    When I run `wp eval 'file_put_contents("/tmp/t.png",base64_decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=")); echo wp_insert_attachment(array("post_mime_type"=>"image/png","post_title"=>"Test","post_status"=>"inherit","post_content"=>""),"/tmp/t.png");'`
+    And save STDOUT as {ATTACHMENT_ID}
+    And I run `wp ai generate alt-text {ATTACHMENT_ID} --model=wp-cli-mock-provider:wp-cli-mock-model`
+    Then the return code should be 0
+    And STDOUT should contain:
+      """
+      Alt text generated and saved for attachment
+      """
+
+  @require-wp-7.0
+  Scenario: Alt-text generation with provider option
+    When I run `wp eval 'file_put_contents("/tmp/t.png",base64_decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=")); echo wp_insert_attachment(array("post_mime_type"=>"image/png","post_title"=>"Test","post_status"=>"inherit","post_content"=>""),"/tmp/t.png");'`
+    And save STDOUT as {ATTACHMENT_ID}
+    And I run `wp ai generate alt-text {ATTACHMENT_ID} --provider=wp-cli-mock-provider`
+    Then the return code should be 0
+    And STDOUT should contain:
+      """
+      Alt text generated and saved for attachment
+      """
+
+  @require-wp-7.0
+  Scenario: Alt-text generation with temperature option
+    When I run `wp eval 'file_put_contents("/tmp/t.png",base64_decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=")); echo wp_insert_attachment(array("post_mime_type"=>"image/png","post_title"=>"Test","post_status"=>"inherit","post_content"=>""),"/tmp/t.png");'`
+    And save STDOUT as {ATTACHMENT_ID}
+    And I run `wp ai generate alt-text {ATTACHMENT_ID} --temperature=0.5`
+    Then the return code should be 0
+    And STDOUT should contain:
+      """
+      Alt text generated and saved for attachment
+      """
+
+  @require-wp-7.0
+  Scenario: Alt-text generation with top-p option
+    When I run `wp eval 'file_put_contents("/tmp/t.png",base64_decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=")); echo wp_insert_attachment(array("post_mime_type"=>"image/png","post_title"=>"Test","post_status"=>"inherit","post_content"=>""),"/tmp/t.png");'`
+    And save STDOUT as {ATTACHMENT_ID}
+    And I run `wp ai generate alt-text {ATTACHMENT_ID} --top-p=0.9`
+    Then the return code should be 0
+    And STDOUT should contain:
+      """
+      Alt text generated and saved for attachment
+      """
+
+  @require-wp-7.0
+  Scenario: Alt-text generation with top-k option
+    When I run `wp eval 'file_put_contents("/tmp/t.png",base64_decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=")); echo wp_insert_attachment(array("post_mime_type"=>"image/png","post_title"=>"Test","post_status"=>"inherit","post_content"=>""),"/tmp/t.png");'`
+    And save STDOUT as {ATTACHMENT_ID}
+    And I run `wp ai generate alt-text {ATTACHMENT_ID} --top-k=40`
+    Then the return code should be 0
+    And STDOUT should contain:
+      """
+      Alt text generated and saved for attachment
+      """
+
+  @require-wp-7.0
+  Scenario: Alt-text generation with max-tokens option
+    When I run `wp eval 'file_put_contents("/tmp/t.png",base64_decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=")); echo wp_insert_attachment(array("post_mime_type"=>"image/png","post_title"=>"Test","post_status"=>"inherit","post_content"=>""),"/tmp/t.png");'`
+    And save STDOUT as {ATTACHMENT_ID}
+    And I run `wp ai generate alt-text {ATTACHMENT_ID} --max-tokens=100`
+    Then the return code should be 0
+    And STDOUT should contain:
+      """
+      Alt text generated and saved for attachment
+      """
+
+  @require-wp-7.0
+  Scenario: Alt-text generation with custom system instruction
+    When I run `wp eval 'file_put_contents("/tmp/t.png",base64_decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=")); echo wp_insert_attachment(array("post_mime_type"=>"image/png","post_title"=>"Test","post_status"=>"inherit","post_content"=>""),"/tmp/t.png");'`
+    And save STDOUT as {ATTACHMENT_ID}
+    And I run `wp ai generate alt-text {ATTACHMENT_ID} --system-instruction="Describe image in one sentence"`
+    Then the return code should be 0
+    And STDOUT should contain:
+      """
+      Alt text generated and saved for attachment
+      """
+
