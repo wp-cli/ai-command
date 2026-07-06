@@ -83,7 +83,7 @@ wp ai check <prompt> [--type=<type>]
 Generates AI content.
 
 ~~~
-wp ai generate <type> <prompt> [--model=<models>] [--provider=<provider>] [--temperature=<temperature>] [--top-p=<top-p>] [--top-k=<top-k>] [--max-tokens=<tokens>] [--system-instruction=<instruction>] [--destination-file=<file>] [--stdout] [--format=<format>]
+wp ai generate <type> <prompt> [--model=<models>] [--provider=<provider>] [--temperature=<temperature>] [--top-p=<top-p>] [--top-k=<top-k>] [--max-tokens=<tokens>] [--system-instruction=<instruction>] [--image=<image>] [--destination-file=<file>] [--stdout] [--format=<format>]
 ~~~
 
 **OPTIONS**
@@ -120,6 +120,9 @@ wp ai generate <type> <prompt> [--model=<models>] [--provider=<provider>] [--tem
 	[--system-instruction=<instruction>]
 		System instruction to guide the AI's behavior.
 
+	[--image=<image>]
+		An image to use as input for text or image generation. Can be a local file path, a URL, a data URI, or a WordPress attachment ID.
+
 	[--destination-file=<file>]
 		For image generation, path to save the generated image.
 
@@ -151,6 +154,15 @@ wp ai generate <type> <prompt> [--model=<models>] [--provider=<provider>] [--tem
 
     # Generate with system instruction
     $ wp ai generate text "Explain AI" --system-instruction="Explain as if to a 5-year-old"
+
+    # Generate text from a prompt with an image
+    $ wp ai generate text "Describe this image" --image=photo.jpg
+
+    # Generate alt text for an attachment
+    $ wp ai generate text "Generate alt text for this image" --image=42
+
+    # Generate text with an image URL
+    $ wp ai generate text "What is in this image?" --image=https://example.com/photo.jpg
 
     # Generate image
     $ wp ai generate image "A minimalist WordPress logo" --destination-file=wp-logo.png
