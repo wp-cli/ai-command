@@ -78,7 +78,7 @@ class AI_Command extends WP_CLI_Command {
 	 * : System instruction to guide the AI's behavior.
 	 *
 	 * [--image=<image>]
-	 * : An image to use as input for text generation. Can be a local file path, a URL, or a WordPress attachment ID.
+	 * : An image to use as input for text or image generation. Can be a local file path, a URL, a data URI, or a WordPress attachment ID.
 	 *
 	 * [--destination-file=<file>]
 	 * : For image generation, path to save the generated image.
@@ -125,7 +125,7 @@ class AI_Command extends WP_CLI_Command {
 	 *     $ wp ai generate image "A minimalist WordPress logo" --destination-file=wp-logo.png
 	 *
 	 * @param array{0: string, 1: string} $args Positional arguments.
-	 * @param array{model: string, provider: string, temperature: float, 'top-p': float, 'top-k': int, 'max-tokens': int, 'system-instruction': string, image: string, 'destination-file': string, stdout: bool, format: string} $assoc_args Associative arguments.
+	 * @param array{model: string, provider: string, temperature: float, 'top-p': float, 'top-k': int, 'max-tokens': int, 'system-instruction': string, image?: string, 'destination-file': string, stdout: bool, format: string} $assoc_args Associative arguments.
 	 * @return void
 	 */
 	public function generate( $args, $assoc_args ) {
@@ -203,6 +203,9 @@ class AI_Command extends WP_CLI_Command {
 				}
 				$this->generate_text( $builder, $assoc_args );
 			} elseif ( 'image' === $type ) {
+				if ( isset( $assoc_args['image'] ) ) {
+					$builder = $this->with_image_input( $builder, $assoc_args['image'] );
+				}
 				$this->generate_image( $builder, $assoc_args );
 			}
 		} catch ( \Exception $e ) {
@@ -533,7 +536,7 @@ class AI_Command extends WP_CLI_Command {
 	 */
 	private function with_image_input( $builder, $image_input ) {
 		// Attachment ID (positive integer string).
-		if ( preg_match( '/^\d+$/', (string) $image_input ) ) {
+		if ( ctype_digit( (string) $image_input ) && (int) $image_input > 0 ) {
 			return $this->with_attachment_input( $builder, (int) $image_input );
 		}
 
@@ -563,8 +566,12 @@ class AI_Command extends WP_CLI_Command {
 	private function with_attachment_input( $builder, $attachment_id ) {
 		$attachment = get_post( $attachment_id );
 
-		if ( ! $attachment || 'attachment' !== $attachment->post_type ) {
+		if ( ! $attachment ) {
 			WP_CLI::error( "Attachment with ID {$attachment_id} not found." );
+		}
+
+		if ( 'attachment' !== $attachment->post_type ) {
+			WP_CLI::error( "Post with ID {$attachment_id} is not an attachment." );
 		}
 
 		if ( ! wp_attachment_is_image( $attachment_id ) ) {

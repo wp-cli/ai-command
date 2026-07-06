@@ -280,6 +280,19 @@ Feature: Generate AI content
       """
 
   @require-wp-7.0
+  Scenario: Generates image with a local image file
+    Given a test-image.png file:
+      """
+      fake-png-data
+      """
+
+    When I run `wp ai generate image "Edit this image" --image=test-image.png`
+    Then STDOUT should be:
+      """
+      data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=
+      """
+
+  @require-wp-7.0
   Scenario: Generates text with a local image file
     Given a test-image.png file:
       """
@@ -333,5 +346,14 @@ Feature: Generate AI content
     Then the return code should be 1
     And STDERR should contain:
       """
-      not found
+      is not an attachment
+      """
+
+  @require-wp-7.0
+  Scenario: Generate text with image input treats 0 as a file path
+    When I try `wp ai generate text "Describe this image" --image=0`
+    Then the return code should be 1
+    And STDERR should contain:
+      """
+      Image file not found: 0
       """
