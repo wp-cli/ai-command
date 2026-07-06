@@ -77,6 +77,9 @@ class AI_Command extends WP_CLI_Command {
 	 * [--system-instruction=<instruction>]
 	 * : System instruction to guide the AI's behavior.
 	 *
+	 * [--image=<image>]
+	 * : An image to use as input for text or image generation. Can be a local file path, a URL, a data URI, or a WordPress attachment ID.
+	 *
 	 * [--destination-file=<file>]
 	 * : For image generation, path to save the generated image.
 	 *
@@ -109,11 +112,20 @@ class AI_Command extends WP_CLI_Command {
 	 *     # Generate with system instruction
 	 *     $ wp ai generate text "Explain AI" --system-instruction="Explain as if to a 5-year-old"
 	 *
+	 *     # Generate text from a prompt with an image
+	 *     $ wp ai generate text "Describe this image" --image=photo.jpg
+	 *
+	 *     # Generate alt text for an attachment
+	 *     $ wp ai generate text "Generate alt text for this image" --image=42
+	 *
+	 *     # Generate text with an image URL
+	 *     $ wp ai generate text "What is in this image?" --image=https://example.com/photo.jpg
+	 *
 	 *     # Generate image
 	 *     $ wp ai generate image "A minimalist WordPress logo" --destination-file=wp-logo.png
 	 *
 	 * @param array{0: string, 1: string} $args Positional arguments.
-	 * @param array{model: string, provider: string, temperature: float, 'top-p': float, 'top-k': int, 'max-tokens': int, 'system-instruction': string, 'destination-file': string, stdout: bool, format: string} $assoc_args Associative arguments.
+	 * @param array{model: string, provider: string, temperature: float, 'top-p': float, 'top-k': int, 'max-tokens': int, 'system-instruction': string, image?: string, 'destination-file': string, stdout: bool, format: string} $assoc_args Associative arguments.
 	 * @return void
 	 */
 	public function generate( $args, $assoc_args ) {
@@ -186,8 +198,14 @@ class AI_Command extends WP_CLI_Command {
 			}
 
 			if ( 'text' === $type ) {
+				if ( isset( $assoc_args['image'] ) ) {
+					$builder = $this->with_image_input( $builder, $assoc_args['image'] );
+				}
 				$this->generate_text( $builder, $assoc_args );
 			} elseif ( 'image' === $type ) {
+				if ( isset( $assoc_args['image'] ) ) {
+					$builder = $this->with_image_input( $builder, $assoc_args['image'] );
+				}
 				$this->generate_image( $builder, $assoc_args );
 			}
 		} catch ( \Exception $e ) {
@@ -503,5 +521,124 @@ class AI_Command extends WP_CLI_Command {
 		} else {
 			WP_CLI::line( (string) $image_file->getDataUri() );
 		}
+	}
+
+	/**
+	 * Adds image input to the prompt builder.
+	 *
+	 * Accepts a local file path, a URL (http/https), a data URI, or a WordPress attachment ID.
+	 *
+	 * @param \WordPress\AI_Client\Builders\Prompt_Builder $builder     The prompt builder.
+	 * @param string                                       $image_input Local file path, URL, data URI, or attachment ID.
+	 * @return mixed The updated prompt builder.
+	 *
+	 * @phpstan-ignore class.notFound
+	 */
+	private function with_image_input( $builder, $image_input ) {
+		// Attachment ID (positive integer string).
+		if ( ctype_digit( $image_input ) && (int) $image_input > 0 ) {
+			return $this->with_attachment_input( $builder, (int) $image_input );
+		}
+
+		// Data URI or remote URL — pass directly to with_file().
+		if (
+			0 === strpos( $image_input, 'data:' ) ||
+			0 === strpos( $image_input, 'http://' ) ||
+			0 === strpos( $image_input, 'https://' )
+		) {
+			// @phpstan-ignore class.notFound
+			return $builder->with_file( $image_input );
+		}
+
+		// Local file path.
+		return $this->with_local_file_input( $builder, $image_input );
+	}
+
+	/**
+	 * Adds a WordPress attachment as image input to the prompt builder.
+	 *
+	 * @param \WordPress\AI_Client\Builders\Prompt_Builder $builder       The prompt builder.
+	 * @param int                                          $attachment_id The attachment ID.
+	 * @return mixed The updated prompt builder.
+	 *
+	 * @phpstan-ignore class.notFound
+	 */
+	private function with_attachment_input( $builder, $attachment_id ) {
+		$attachment = get_post( $attachment_id );
+
+		if ( ! $attachment ) {
+			WP_CLI::error( "Attachment with ID {$attachment_id} not found." );
+		}
+
+		if ( 'attachment' !== $attachment->post_type ) {
+			WP_CLI::error( "Post with ID {$attachment_id} is not an attachment." );
+		}
+
+		if ( ! wp_attachment_is_image( $attachment_id ) ) {
+			WP_CLI::error( "Attachment {$attachment_id} is not an image." );
+		}
+
+		$file_path = get_attached_file( $attachment_id );
+
+		if ( $file_path && file_exists( $file_path ) ) {
+			$mime_type = get_post_mime_type( $attachment_id );
+			if ( ! $mime_type ) {
+				WP_CLI::error( "Could not determine MIME type for attachment {$attachment_id}." );
+			}
+
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+			$contents = file_get_contents( $file_path );
+			if ( false === $contents ) {
+				WP_CLI::error( "Could not read image file for attachment {$attachment_id}." );
+			}
+
+			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+			$data_uri = 'data:' . $mime_type . ';base64,' . base64_encode( $contents );
+
+			// @phpstan-ignore class.notFound
+			return $builder->with_file( $data_uri );
+		}
+
+		// Fall back to the attachment URL.
+		$image_src = wp_get_attachment_image_src( $attachment_id, 'full' );
+		if ( $image_src && ! empty( $image_src[0] ) ) {
+			// @phpstan-ignore class.notFound
+			return $builder->with_file( $image_src[0] );
+		}
+
+		WP_CLI::error( "Could not retrieve image for attachment {$attachment_id}." );
+	}
+
+	/**
+	 * Adds a local image file as input to the prompt builder.
+	 *
+	 * @param \WordPress\AI_Client\Builders\Prompt_Builder $builder   The prompt builder.
+	 * @param string                                       $file_path The local file path.
+	 * @return mixed The updated prompt builder.
+	 *
+	 * @phpstan-ignore class.notFound
+	 */
+	private function with_local_file_input( $builder, $file_path ) {
+		if ( ! file_exists( $file_path ) ) {
+			WP_CLI::error( "Image file not found: {$file_path}" );
+		}
+
+		$filetype  = wp_check_filetype( $file_path );
+		$mime_type = $filetype['type'];
+		if ( ! $mime_type || 0 !== strpos( $mime_type, 'image/' ) ) {
+			WP_CLI::error( "File does not appear to be an image: {$file_path}" );
+		}
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+		$contents = file_get_contents( $file_path );
+		if ( false === $contents ) {
+			WP_CLI::error( "Could not read image file: {$file_path}" );
+		}
+
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+		$data_uri = 'data:' . $mime_type . ';base64,' . base64_encode( $contents );
+
+		// @phpstan-ignore class.notFound
+		return $builder->with_file( $data_uri );
 	}
 }
