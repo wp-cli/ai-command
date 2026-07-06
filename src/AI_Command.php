@@ -536,7 +536,7 @@ class AI_Command extends WP_CLI_Command {
 	 */
 	private function with_image_input( $builder, $image_input ) {
 		// Attachment ID (positive integer string).
-		if ( ctype_digit( (string) $image_input ) && (int) $image_input > 0 ) {
+		if ( ctype_digit( $image_input ) && (int) $image_input > 0 ) {
 			return $this->with_attachment_input( $builder, (int) $image_input );
 		}
 
