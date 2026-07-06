@@ -532,8 +532,8 @@ class AI_Command extends WP_CLI_Command {
 	 * @phpstan-ignore class.notFound
 	 */
 	private function with_image_input( $builder, $image_input ) {
-		// Attachment ID (numeric string).
-		if ( ctype_digit( (string) $image_input ) ) {
+		// Attachment ID (positive integer string).
+		if ( preg_match( '/^\d+$/', (string) $image_input ) ) {
 			return $this->with_attachment_input( $builder, (int) $image_input );
 		}
 
@@ -616,7 +616,8 @@ class AI_Command extends WP_CLI_Command {
 			WP_CLI::error( "Image file not found: {$file_path}" );
 		}
 
-		$mime_type = wp_check_filetype( $file_path )['type'];
+		$filetype  = wp_check_filetype( $file_path );
+		$mime_type = $filetype['type'];
 		if ( ! $mime_type || 0 !== strpos( $mime_type, 'image/' ) ) {
 			WP_CLI::error( "File does not appear to be an image: {$file_path}" );
 		}
