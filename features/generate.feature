@@ -58,7 +58,11 @@ Feature: Generate AI content
               new SupportedOption(OptionEnum::candidateCount()),
               new SupportedOption(OptionEnum::outputMimeType(), ['image/png']),
               new SupportedOption(OptionEnum::outputFileType(), [FileTypeEnum::inline()]),
-              new SupportedOption(OptionEnum::inputModalities(), [[ModalityEnum::text()]]),
+              new SupportedOption(OptionEnum::inputModalities(), [
+                [ModalityEnum::text()],
+                [ModalityEnum::image()],
+                [ModalityEnum::text(), ModalityEnum::image()],
+              ]),
               new SupportedOption(
                 OptionEnum::outputModalities(),
                 [
@@ -273,4 +277,47 @@ Feature: Generate AI content
     Then STDOUT should be:
       """
       data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=
+      """
+
+  @require-wp-7.0
+  Scenario: Generates text with a local image file
+    Given a test-image.png file:
+      """
+      fake-png-data
+      """
+
+    When I run `wp ai generate text "Describe this image" --image=test-image.png`
+    Then STDOUT should be:
+      """
+      This is mock-generated text
+      """
+
+  @require-wp-7.0
+  Scenario: Generate text with image input fails for non-existent local file
+    When I try `wp ai generate text "Describe this" --image=/tmp/nonexistent-image-12345.png`
+    Then the return code should be 1
+    And STDERR should contain:
+      """
+      Image file not found
+      """
+
+  @require-wp-7.0
+  Scenario: Generate text with image input fails for non-existent attachment
+    When I try `wp ai generate text "Describe this" --image=99999`
+    Then the return code should be 1
+    And STDERR should contain:
+      """
+      Attachment with ID 99999 not found
+      """
+
+  @require-wp-7.0
+  Scenario: Generate text with image input fails for non-image attachment
+    When I run `wp post create --post_title="Test Post" --post_type=post --post_status=publish --porcelain`
+    Then save STDOUT as {POST_ID}
+
+    When I try `wp ai generate text "Describe this" --image={POST_ID}`
+    Then the return code should be 1
+    And STDERR should contain:
+      """
+      not found
       """
