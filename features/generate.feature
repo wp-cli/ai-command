@@ -311,7 +311,21 @@ Feature: Generate AI content
       """
 
   @require-wp-7.0
-  Scenario: Generate text with image input fails for non-image attachment
+  Scenario: Generate text with image input fails for non-image local file
+    Given a test-document.txt file:
+      """
+      hello world
+      """
+
+    When I try `wp ai generate text "Describe this" --image=test-document.txt`
+    Then the return code should be 1
+    And STDERR should contain:
+      """
+      File does not appear to be an image
+      """
+
+  @require-wp-7.0
+  Scenario: Generate text with image input fails for non-attachment post
     When I run `wp post create --post_title="Test Post" --post_type=post --post_status=publish --porcelain`
     Then save STDOUT as {POST_ID}
 

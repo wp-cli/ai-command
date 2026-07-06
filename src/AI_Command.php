@@ -617,8 +617,8 @@ class AI_Command extends WP_CLI_Command {
 		}
 
 		$mime_type = wp_check_filetype( $file_path )['type'];
-		if ( ! $mime_type ) {
-			WP_CLI::error( "Could not determine MIME type for: {$file_path}" );
+		if ( ! $mime_type || 0 !== strpos( $mime_type, 'image/' ) ) {
+			WP_CLI::error( "File does not appear to be an image: {$file_path}" );
 		}
 
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
