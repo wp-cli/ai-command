@@ -6,7 +6,7 @@
     "license": "MIT",
     "authors": [],
     "require": {
-        "wp-cli/wp-cli": "^2.13"
+        "wp-cli/wp-cli": "^3.0"
     },
     "require-dev": {
         "wp-cli/entity-command": "^2",
