@@ -276,6 +276,7 @@ wp connectors get <connector> [--fields=<fields>] [--format=<format>]
     +-----------------+-----------------------------------------------+
     | Field           | Value                                         |
     +-----------------+-----------------------------------------------+
+    | id              | openai                                        |
     | name            | OpenAI                                        |
     | description     | Text and image generation with GPT and Dall-E |
     | status          | connected                                     |
@@ -323,13 +324,13 @@ wp connectors list [--status=<status>] [--fields=<fields>] [--format=<format>]
 
     # List all connectors
     $ wp connectors list
-    +-----------+-----------------------------------------------+---------------+
-    | name      | description                                   | status        |
-    +-----------+-----------------------------------------------+---------------+
-    | Anthropic | Text generation with Claude.                  | not installed |
-    | Google    | Text and image generation with Gemini...      | not installed |
-    | OpenAI    | Text and image generation with GPT and Dall-E | connected     |
-    +-----------+-----------------------------------------------+---------------+
+    +-----------+-----------+-----------------------------------------------+---------------+
+    | id        | name      | description                                   | status        |
+    +-----------+-----------+-----------------------------------------------+---------------+
+    | anthropic | Anthropic | Text generation with Claude.                  | not installed |
+    | google    | Google    | Text and image generation with Gemini...      | not installed |
+    | openai    | OpenAI    | Text and image generation with GPT and Dall-E | connected     |
+    +-----------+-----------+-----------------------------------------------+---------------+
 
     # List only connected connectors
     $ wp connectors list --status=connected
