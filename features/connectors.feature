@@ -17,6 +17,10 @@ Feature: List and get AI connectors
     When I run `wp connectors list --format=json`
     Then STDOUT should contain:
       """
+      "id":"openai"
+      """
+    And STDOUT should contain:
+      """
       "name":"OpenAI"
       """
     And STDOUT should contain:
@@ -49,9 +53,13 @@ Feature: List and get AI connectors
       """
 
   @require-wp-7.0
-  Scenario: List connectors in table format shows name, description and status columns
+  Scenario: List connectors in table format shows id, name, description and status columns
     When I run `wp connectors list`
     Then STDOUT should contain:
+      """
+      | id
+      """
+    And STDOUT should contain:
       """
       name
       """
@@ -65,11 +73,23 @@ Feature: List and get AI connectors
       """
     And STDOUT should contain:
       """
+      | openai
+      """
+    And STDOUT should contain:
+      """
       OpenAI
       """
     And STDOUT should contain:
       """
+      | anthropic
+      """
+    And STDOUT should contain:
+      """
       Anthropic
+      """
+    And STDOUT should contain:
+      """
+      | google
       """
     And STDOUT should contain:
       """
@@ -93,6 +113,10 @@ Feature: List and get AI connectors
     When I run `wp connectors get openai`
     Then STDOUT should contain:
       """
+      | id
+      """
+    And STDOUT should contain:
+      """
       name
       """
     And STDOUT should contain:
@@ -109,7 +133,7 @@ Feature: List and get AI connectors
     When I run `wp connectors get openai --format=json`
     Then STDOUT should be JSON containing:
       """
-      {"name":"OpenAI","description":"Text and image generation with GPT and Dall-E.","status":"not installed","credentials_url":"https://platform.openai.com/api-keys","api_key":""}
+      {"id":"openai","name":"OpenAI","description":"Text and image generation with GPT and Dall-E.","status":"not installed","credentials_url":"https://platform.openai.com/api-keys","api_key":""}
       """
 
   # TODO: Depends on https://core.trac.wordpress.org/ticket/64819.
@@ -141,6 +165,28 @@ Feature: List and get AI connectors
     Then STDOUT should be JSON containing:
       """
       {"name":"OpenAI","auth_method":"api_key","type":"ai_provider","plugin_file":"ai-provider-for-openai/plugin.php"}
+      """
+
+  @require-wp-7.0
+  Scenario: Connector ID from list can be passed to get
+    When I run `wp connectors list --fields=id --format=json`
+    Then STDOUT should contain:
+      """
+      {"id":"openai"}
+      """
+    And STDOUT should contain:
+      """
+      {"id":"anthropic"}
+      """
+    And STDOUT should contain:
+      """
+      {"id":"google"}
+      """
+
+    When I run `wp connectors get openai --fields=id --format=json`
+    Then STDOUT should be JSON containing:
+      """
+      {"id":"openai"}
       """
 
   @require-wp-7.0

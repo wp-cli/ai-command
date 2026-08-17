@@ -23,6 +23,7 @@ class Connectors_Command extends WP_CLI_Command {
 	 * @var string[]
 	 */
 	protected $default_fields = [
+		'id',
 		'name',
 		'description',
 		'status',
@@ -61,13 +62,13 @@ class Connectors_Command extends WP_CLI_Command {
 	 *
 	 *     # List all connectors
 	 *     $ wp connectors list
-	 *     +-----------+-----------------------------------------------+---------------+
-	 *     | name      | description                                   | status        |
-	 *     +-----------+-----------------------------------------------+---------------+
-	 *     | Anthropic | Text generation with Claude.                  | not installed |
-	 *     | Google    | Text and image generation with Gemini...      | not installed |
-	 *     | OpenAI    | Text and image generation with GPT and Dall-E | connected     |
-	 *     +-----------+-----------------------------------------------+---------------+
+	 *     +-----------+-----------+-----------------------------------------------+---------------+
+	 *     | id        | name      | description                                   | status        |
+	 *     +-----------+-----------+-----------------------------------------------+---------------+
+	 *     | anthropic | Anthropic | Text generation with Claude.                  | not installed |
+	 *     | google    | Google    | Text and image generation with Gemini...      | not installed |
+	 *     | openai    | OpenAI    | Text and image generation with GPT and Dall-E | connected     |
+	 *     +-----------+-----------+-----------------------------------------------+---------------+
 	 *
 	 *     # List only connected connectors
 	 *     $ wp connectors list --status=connected
@@ -141,6 +142,7 @@ class Connectors_Command extends WP_CLI_Command {
 	 *     +-----------------+-----------------------------------------------+
 	 *     | Field           | Value                                         |
 	 *     +-----------------+-----------------------------------------------+
+	 *     | id              | openai                                        |
 	 *     | name            | OpenAI                                        |
 	 *     | description     | Text and image generation with GPT and Dall-E |
 	 *     | status          | connected                                     |
@@ -180,7 +182,7 @@ class Connectors_Command extends WP_CLI_Command {
 
 		$item['api_key'] = $api_key;
 
-		$default_fields = array( 'name', 'description', 'status', 'credentials_url', 'api_key' );
+		$default_fields = array( 'id', 'name', 'description', 'status', 'credentials_url', 'api_key' );
 		$formatter      = new \WP_CLI\Formatter( $assoc_args, $default_fields );
 		$formatter->display_item( $item );
 	}
@@ -190,7 +192,7 @@ class Connectors_Command extends WP_CLI_Command {
 	 *
 	 * @param string  $connector_id The connector ID.
 	 * @param mixed[] $connector    Connector settings from wp_get_connectors().
-	 * @return array{name: string, description: string, status: string, type: string, auth_method: string, credentials_url: string, plugin_file: string}
+	 * @return array{id: string, name: string, description: string, status: string, type: string, auth_method: string, credentials_url: string, plugin_file: string}
 	 */
 	private function build_connector_item( string $connector_id, array $connector ): array {
 		$auth        = is_array( $connector['authentication'] ) ? $connector['authentication'] : array();
@@ -198,6 +200,7 @@ class Connectors_Command extends WP_CLI_Command {
 		$plugin_file = isset( $plugin['file'] ) && is_string( $plugin['file'] ) ? $plugin['file'] : '';
 
 		return array(
+			'id'              => $connector_id,
 			'name'            => $this->scalar_to_string( $connector['name'] ?? '' ),
 			'description'     => $this->scalar_to_string( $connector['description'] ?? '' ),
 			'status'          => $this->get_connector_status( $connector_id, $connector ),
