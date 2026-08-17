@@ -55,46 +55,10 @@ Feature: List and get AI connectors
   @require-wp-7.0
   Scenario: List connectors in table format shows id, name, description and status columns
     When I run `wp connectors list`
-    Then STDOUT should contain:
-      """
-      | id
-      """
-    And STDOUT should contain:
-      """
-      name
-      """
-    And STDOUT should contain:
-      """
-      description
-      """
-    And STDOUT should contain:
-      """
-      status
-      """
-    And STDOUT should contain:
-      """
-      | openai
-      """
-    And STDOUT should contain:
-      """
-      OpenAI
-      """
-    And STDOUT should contain:
-      """
-      | anthropic
-      """
-    And STDOUT should contain:
-      """
-      Anthropic
-      """
-    And STDOUT should contain:
-      """
-      | google
-      """
-    And STDOUT should contain:
-      """
-      Google
-      """
+    Then STDOUT should match /^id\tname\tdescription\tstatus$/m
+    And STDOUT should match /^anthropic\tAnthropic\t/m
+    And STDOUT should match /^google\tGoogle\t/m
+    And STDOUT should match /^openai\tOpenAI\t/m
 
   @require-wp-7.0
   Scenario: List connectors supports --status filter
@@ -111,22 +75,10 @@ Feature: List and get AI connectors
   @require-wp-7.0
   Scenario: Get a specific connector shows key-value layout
     When I run `wp connectors get openai`
-    Then STDOUT should contain:
-      """
-      | id
-      """
-    And STDOUT should contain:
-      """
-      name
-      """
-    And STDOUT should contain:
-      """
-      OpenAI
-      """
-    And STDOUT should contain:
-      """
-      status
-      """
+    Then STDOUT should match /^Field\tValue$/m
+    And STDOUT should match /^id\topenai$/m
+    And STDOUT should match /^name\tOpenAI$/m
+    And STDOUT should match /^status\t/m
 
   @require-wp-7.0
   Scenario: Get a specific connector in JSON format
@@ -182,11 +134,12 @@ Feature: List and get AI connectors
       """
       {"id":"google"}
       """
+    And save STDOUT '"id":"([a-z0-9_-]+)"' as {CONNECTOR_ID}
 
-    When I run `wp connectors get openai --fields=id --format=json`
+    When I run `wp connectors get {CONNECTOR_ID} --fields=id --format=json`
     Then STDOUT should be JSON containing:
       """
-      {"id":"openai"}
+      {"id":"{CONNECTOR_ID}"}
       """
 
   @require-wp-7.0
