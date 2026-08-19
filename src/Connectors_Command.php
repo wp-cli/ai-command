@@ -41,7 +41,7 @@ class Connectors_Command extends WP_CLI_Command {
 	 *   - connected
 	 *   - active
 	 *   - installed
-	 *   - not installed
+	 *   - uninstalled
 	 * ---
 	 *
 	 * [--fields=<fields>]
@@ -62,13 +62,13 @@ class Connectors_Command extends WP_CLI_Command {
 	 *
 	 *     # List all connectors
 	 *     $ wp connectors list
-	 *     +-----------+-----------+-----------------------------------------------+---------------+
-	 *     | id        | name      | description                                   | status        |
-	 *     +-----------+-----------+-----------------------------------------------+---------------+
-	 *     | anthropic | Anthropic | Text generation with Claude.                  | not installed |
-	 *     | google    | Google    | Text and image generation with Gemini...      | not installed |
-	 *     | openai    | OpenAI    | Text and image generation with GPT and Dall-E | connected     |
-	 *     +-----------+-----------+-----------------------------------------------+---------------+
+	 *     +-----------+-----------+-----------------------------------------------+-------------+
+	 *     | id        | name      | description                                   | status      |
+	 *     +-----------+-----------+-----------------------------------------------+-------------+
+	 *     | anthropic | Anthropic | Text generation with Claude.                  | uninstalled |
+	 *     | google    | Google    | Text and image generation with Gemini...      | uninstalled |
+	 *     | openai    | OpenAI    | Text and image generation with GPT and Dall-E | connected   |
+	 *     +-----------+-----------+-----------------------------------------------+-------------+
 	 *
 	 *     # List only connected connectors
 	 *     $ wp connectors list --status=connected
@@ -214,7 +214,7 @@ class Connectors_Command extends WP_CLI_Command {
 	/**
 	 * Returns the status of a connector.
 	 *
-	 * Possible values: 'connected', 'active', 'installed', 'not installed'.
+	 * Possible values: 'connected', 'active', 'installed', 'uninstalled'.
 	 *
 	 * @param string  $connector_id The connector ID.
 	 * @param mixed[] $connector    Connector settings from wp_get_connectors().
@@ -245,7 +245,7 @@ class Connectors_Command extends WP_CLI_Command {
 			return 'installed';
 		}
 
-		return 'not installed';
+		return 'uninstalled';
 	}
 
 	/**
