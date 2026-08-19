@@ -41,7 +41,7 @@ Feature: List and get AI connectors
       """
 
   @require-wp-7.0
-  Scenario: List connectors shows not-installed status when plugins are absent
+  Scenario: List connectors shows uninstalled status when plugins are absent
     When I run `wp connectors list --format=json`
     Then STDOUT should contain:
       """
@@ -49,7 +49,7 @@ Feature: List and get AI connectors
       """
     And STDOUT should contain:
       """
-      "status":"not installed"
+      "status":"uninstalled"
       """
 
   @require-wp-7.0
@@ -62,7 +62,7 @@ Feature: List and get AI connectors
 
   @require-wp-7.0
   Scenario: List connectors supports --status filter
-    When I run `wp connectors list --status="not installed" --format=json`
+    When I run `wp connectors list --status=uninstalled --format=json`
     Then STDOUT should contain:
       """
       "name":"OpenAI"
@@ -85,7 +85,7 @@ Feature: List and get AI connectors
     When I run `wp connectors get openai --format=json`
     Then STDOUT should be JSON containing:
       """
-      {"id":"openai","name":"OpenAI","description":"Text and image generation with GPT and Dall-E.","status":"not installed","credentials_url":"https://platform.openai.com/api-keys","api_key":""}
+      {"id":"openai","name":"OpenAI","description":"Text and image generation with GPT and Dall-E.","status":"uninstalled","credentials_url":"https://platform.openai.com/api-keys","api_key":""}
       """
 
   # TODO: Depends on https://core.trac.wordpress.org/ticket/64819.
