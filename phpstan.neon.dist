@@ -8,3 +8,20 @@ parameters:
   scanFiles:
     - vendor/php-stubs/wordpress-stubs/wordpress-stubs.php
   treatPhpDocTypesAsCertain: false
+  ignoreErrors:
+    # johnbillion/wp-compat checks every WordPress symbol against the WordPress 4.9
+    # baseline that wp-cli-tests configures. It only recognizes function_exists() and
+    # method_exists() guards, so it cannot see the `before_invoke` check in
+    # ai-command.php that aborts `wp ai` and `wp connectors` below WordPress 7.0.
+    #
+    # The entries below match on the message as well as the identifier, naming both the
+    # functions and that version, so a call to anything introduced after 7.0 still gets
+    # reported rather than swallowed by a file-wide ignore.
+    -
+      identifier: WPCompat.functionNotAvailable
+      message: '#^(wp_ai_client_prompt|wp_supports_ai)\(\) is only available since WordPress version 7\.0\.0\.$#'
+      path: src/AI_Command.php
+    -
+      identifier: WPCompat.functionNotAvailable
+      message: '#^(wp_get_connector|wp_get_connectors)\(\) is only available since WordPress version 7\.0\.0\.$#'
+      path: src/Connectors_Command.php
