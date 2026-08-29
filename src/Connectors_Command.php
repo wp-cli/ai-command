@@ -81,7 +81,6 @@ class Connectors_Command extends WP_CLI_Command {
 	 * @return void
 	 */
 	public function list_( $args, $assoc_args ) {
-		// @phpstan-ignore function.notFound
 		$connectors = wp_get_connectors();
 
 		$items = array();
@@ -159,7 +158,6 @@ class Connectors_Command extends WP_CLI_Command {
 	public function get( $args, $assoc_args ) {
 		list( $connector_id ) = $args;
 
-		// @phpstan-ignore function.notFound
 		$connector = wp_get_connector( $connector_id );
 
 		if ( ! $connector ) {
