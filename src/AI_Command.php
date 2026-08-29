@@ -131,18 +131,12 @@ class AI_Command extends WP_CLI_Command {
 	public function generate( $args, $assoc_args ) {
 		list( $type, $prompt ) = $args;
 
-		// @phpstan-ignore function.notFound
 		if ( ! wp_supports_ai() ) {
 			WP_CLI::error( 'AI features are not supported in this environment.' );
 		}
 
 		try {
-			// @phpstan-ignore function.notFound
 			$builder = wp_ai_client_prompt( $prompt );
-
-			if ( is_wp_error( $builder ) ) {
-				WP_CLI::error( $builder->get_error_message() );
-			}
 
 			if ( isset( $assoc_args['provider'] ) ) {
 				$builder = $builder->using_provider( $assoc_args['provider'] );
@@ -231,7 +225,6 @@ class AI_Command extends WP_CLI_Command {
 	 * @return void
 	 */
 	public function is_supported( $args, $assoc_args ) {
-		// @phpstan-ignore function.notFound
 		if ( wp_supports_ai() ) {
 			WP_CLI::halt( 0 );
 		} else {
@@ -271,18 +264,12 @@ class AI_Command extends WP_CLI_Command {
 		list( $prompt ) = $args;
 		$type           = $assoc_args['type'] ?? 'text';
 
-		// @phpstan-ignore function.notFound
 		if ( ! wp_supports_ai() ) {
 			WP_CLI::error( 'AI features are not supported in this environment.' );
 		}
 
 		try {
-			// @phpstan-ignore function.notFound
 			$builder = wp_ai_client_prompt( $prompt );
-
-			if ( is_wp_error( $builder ) ) {
-				WP_CLI::error( $builder->get_error_message() );
-			}
 
 			if ( 'text' === $type ) {
 				$supported = $builder->is_supported_for_text_generation();
@@ -342,12 +329,7 @@ class AI_Command extends WP_CLI_Command {
 	 */
 	public function status( $args, $assoc_args ) {
 		try {
-			// @phpstan-ignore function.notFound
 			$builder = wp_ai_client_prompt();
-
-			if ( is_wp_error( $builder ) ) {
-				WP_CLI::error( $builder->get_error_message() );
-			}
 
 			// Check each capability
 			$capabilities = array(
@@ -391,21 +373,17 @@ class AI_Command extends WP_CLI_Command {
 	/**
 	 * Generates text from the prompt builder.
 	 *
-	 * @param \WordPress\AI_Client\Builders\Prompt_Builder $builder     The prompt builder.
-	 * @param array{format: string}                        $assoc_args Associative arguments.
+	 * @param \WP_AI_Client_Prompt_Builder $builder    The prompt builder.
+	 * @param array{format: string}        $assoc_args Associative arguments.
 	 * @return void
-	 *
-	 * @phpstan-ignore class.notFound
 	 */
 	private function generate_text( $builder, $assoc_args ) {
 		$format = $assoc_args['format'] ?? 'text';
 
-		// @phpstan-ignore class.notFound
 		if ( ! $builder->is_supported_for_text_generation() ) {
 			WP_CLI::error( 'Text generation is not supported. Make sure AI provider credentials are configured.' );
 		}
 
-		// @phpstan-ignore class.notFound
 		$text = $builder->generate_text_result();
 
 		if ( is_wp_error( $text ) ) {
@@ -429,11 +407,8 @@ class AI_Command extends WP_CLI_Command {
 				"Summary:\nModel used: %s (%s)\nToken usage:\nInput tokens: %s\nOutput tokens: %s\nTotal: %s\n",
 				$text->getModelMetadata()->getName(),
 				$text->getProviderMetadata()->getName(),
-				// @phpstan-ignore class.notFound
 				$token_usage[ TokenUsage::KEY_PROMPT_TOKENS ],
-				// @phpstan-ignore class.notFound
 				$token_usage[ TokenUsage::KEY_COMPLETION_TOKENS ],
-				// @phpstan-ignore class.notFound
 				$token_usage[ TokenUsage::KEY_TOTAL_TOKENS ]
 			),
 			'ai'
@@ -443,14 +418,11 @@ class AI_Command extends WP_CLI_Command {
 	/**
 	 * Generates an image from the prompt builder.
 	 *
-	 * @param \WordPress\AI_Client\Builders\Prompt_Builder    $builder    The prompt builder.
+	 * @param \WP_AI_Client_Prompt_Builder                    $builder    The prompt builder.
 	 * @param array{'destination-file': string, stdout: bool} $assoc_args Associative arguments.
 	 * @return void
-	 *
-	 * @phpstan-ignore class.notFound
 	 */
 	private function generate_image( $builder, $assoc_args ) {
-		// @phpstan-ignore class.notFound
 		if ( ! $builder->is_supported_for_image_generation() ) {
 			WP_CLI::error( 'Image generation is not supported. Make sure AI provider credentials are configured.' );
 		}
@@ -468,7 +440,6 @@ class AI_Command extends WP_CLI_Command {
 			}
 		}
 
-		// @phpstan-ignore class.notFound
 		$image_file = $builder->generate_image();
 
 		if ( is_wp_error( $image_file ) ) {
@@ -528,11 +499,9 @@ class AI_Command extends WP_CLI_Command {
 	 *
 	 * Accepts a local file path, a URL (http/https), a data URI, or a WordPress attachment ID.
 	 *
-	 * @param \WordPress\AI_Client\Builders\Prompt_Builder $builder     The prompt builder.
-	 * @param string                                       $image_input Local file path, URL, data URI, or attachment ID.
-	 * @return mixed The updated prompt builder.
-	 *
-	 * @phpstan-ignore class.notFound
+	 * @param \WP_AI_Client_Prompt_Builder $builder     The prompt builder.
+	 * @param string                       $image_input Local file path, URL, data URI, or attachment ID.
+	 * @return \WP_AI_Client_Prompt_Builder The updated prompt builder.
 	 */
 	private function with_image_input( $builder, $image_input ) {
 		// Attachment ID (positive integer string).
@@ -546,7 +515,6 @@ class AI_Command extends WP_CLI_Command {
 			0 === strpos( $image_input, 'http://' ) ||
 			0 === strpos( $image_input, 'https://' )
 		) {
-			// @phpstan-ignore class.notFound
 			return $builder->with_file( $image_input );
 		}
 
@@ -557,11 +525,9 @@ class AI_Command extends WP_CLI_Command {
 	/**
 	 * Adds a WordPress attachment as image input to the prompt builder.
 	 *
-	 * @param \WordPress\AI_Client\Builders\Prompt_Builder $builder       The prompt builder.
-	 * @param int                                          $attachment_id The attachment ID.
-	 * @return mixed The updated prompt builder.
-	 *
-	 * @phpstan-ignore class.notFound
+	 * @param \WP_AI_Client_Prompt_Builder $builder       The prompt builder.
+	 * @param int                          $attachment_id The attachment ID.
+	 * @return \WP_AI_Client_Prompt_Builder The updated prompt builder.
 	 */
 	private function with_attachment_input( $builder, $attachment_id ) {
 		$attachment = get_post( $attachment_id );
@@ -595,14 +561,12 @@ class AI_Command extends WP_CLI_Command {
 			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
 			$data_uri = 'data:' . $mime_type . ';base64,' . base64_encode( $contents );
 
-			// @phpstan-ignore class.notFound
 			return $builder->with_file( $data_uri );
 		}
 
 		// Fall back to the attachment URL.
 		$image_src = wp_get_attachment_image_src( $attachment_id, 'full' );
 		if ( $image_src && ! empty( $image_src[0] ) ) {
-			// @phpstan-ignore class.notFound
 			return $builder->with_file( $image_src[0] );
 		}
 
@@ -612,11 +576,9 @@ class AI_Command extends WP_CLI_Command {
 	/**
 	 * Adds a local image file as input to the prompt builder.
 	 *
-	 * @param \WordPress\AI_Client\Builders\Prompt_Builder $builder   The prompt builder.
-	 * @param string                                       $file_path The local file path.
-	 * @return mixed The updated prompt builder.
-	 *
-	 * @phpstan-ignore class.notFound
+	 * @param \WP_AI_Client_Prompt_Builder $builder   The prompt builder.
+	 * @param string                       $file_path The local file path.
+	 * @return \WP_AI_Client_Prompt_Builder The updated prompt builder.
 	 */
 	private function with_local_file_input( $builder, $file_path ) {
 		if ( ! file_exists( $file_path ) ) {
@@ -638,7 +600,6 @@ class AI_Command extends WP_CLI_Command {
 		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
 		$data_uri = 'data:' . $mime_type . ';base64,' . base64_encode( $contents );
 
-		// @phpstan-ignore class.notFound
 		return $builder->with_file( $data_uri );
 	}
 }
