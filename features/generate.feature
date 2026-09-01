@@ -192,7 +192,7 @@ Feature: Generate AI content
                   }
 
                   public function getModelMetadata( string $modelId ): ModelMetadata {
-                      return self::model()->metadata();
+                      return WP_CLI_Mock_Provider::model( $modelId )->metadata();
                   }
               };
           }
