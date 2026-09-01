@@ -32,168 +32,177 @@ Feature: Generate AI content
       use WordPress\AiClient\Results\Enums\FinishReasonEnum;
 
       if ( ! interface_exists( 'WordPress\AiClient\Providers\Models\Contracts\ModelInterface' ) ) {
-        return;
+          return;
       }
 
       class WP_CLI_Mock_Model implements ModelInterface, TextGenerationModelInterface, ImageGenerationModelInterface {
-        private $id;
-        private $config;
+          private $id;
+          private $config;
 
-        public function __construct( $id ) {
-          $this->id     = $id;
-          $this->config = new ModelConfig();
-        }
+          public function __construct( $id ) {
+              $this->id     = $id;
+              $this->config = new ModelConfig();
+          }
 
-        public function metadata(): ModelMetadata {
-          return new ModelMetadata(
-            $this->id,
-            'WP-CLI Mock Model',
-            // Supported capabilities.
-            [
-              CapabilityEnum::textGeneration(),
-              CapabilityEnum::imageGeneration(),
-            ],
-            // Supported options.
-            [
-              new SupportedOption(OptionEnum::candidateCount()),
-              new SupportedOption(OptionEnum::outputMimeType(), ['image/png']),
-              new SupportedOption(OptionEnum::outputFileType(), [FileTypeEnum::inline()]),
-              new SupportedOption(OptionEnum::inputModalities(), [
-                [ModalityEnum::text()],
-                [ModalityEnum::image()],
-                [ModalityEnum::text(), ModalityEnum::image()],
-              ]),
-              new SupportedOption(
-                OptionEnum::outputModalities(),
-                [
-                    [ModalityEnum::text()],
-                    [ModalityEnum::image()],
-                    [ModalityEnum::text(), ModalityEnum::image()],
-                ]
-              ),
-              new SupportedOption(OptionEnum::candidateCount()),
-              new SupportedOption(OptionEnum::outputMimeType(), ['image/png']),
-              new SupportedOption(OptionEnum::outputFileType(), [FileTypeEnum::inline(), FileTypeEnum::remote()]),
-              new SupportedOption(OptionEnum::outputMediaOrientation(), [
-                MediaOrientationEnum::square(),
-                MediaOrientationEnum::landscape(),
-                MediaOrientationEnum::portrait(),
-              ]),
-              new SupportedOption(OptionEnum::outputMediaAspectRatio(), ['1:1', '7:4', '4:7']),
-              new SupportedOption(OptionEnum::customOptions()),
-            ]
-          );
-        }
+          public function metadata(): ModelMetadata {
+              return new ModelMetadata(
+                  $this->id,
+                  'WP-CLI Mock Model',
+                  // Supported capabilities.
+                  [
+                      CapabilityEnum::textGeneration(),
+                      CapabilityEnum::imageGeneration(),
+                  ],
+                  // Supported options.
+                  [
+                      new SupportedOption( OptionEnum::candidateCount() ),
+                      new SupportedOption( OptionEnum::outputMimeType(), [ 'image/png' ] ),
+                      new SupportedOption( OptionEnum::outputFileType(), [ FileTypeEnum::inline() ] ),
+                      new SupportedOption(
+                          OptionEnum::inputModalities(),
+                          [
+                              [ ModalityEnum::text() ],
+                              [ ModalityEnum::image() ],
+                              [ ModalityEnum::text(), ModalityEnum::image() ],
+                          ]
+                      ),
+                      new SupportedOption(
+                          OptionEnum::outputModalities(),
+                          [
+                              [ ModalityEnum::text() ],
+                              [ ModalityEnum::image() ],
+                              [ ModalityEnum::text(), ModalityEnum::image() ],
+                          ]
+                      ),
+                      new SupportedOption( OptionEnum::candidateCount() ),
+                      new SupportedOption( OptionEnum::outputMimeType(), [ 'image/png' ] ),
+                      new SupportedOption( OptionEnum::outputFileType(), [ FileTypeEnum::inline(), FileTypeEnum::remote() ] ),
+                      new SupportedOption(
+                          OptionEnum::outputMediaOrientation(),
+                          [
+                              MediaOrientationEnum::square(),
+                              MediaOrientationEnum::landscape(),
+                              MediaOrientationEnum::portrait(),
+                          ]
+                      ),
+                      new SupportedOption( OptionEnum::outputMediaAspectRatio(), [ '1:1', '7:4', '4:7' ] ),
+                      new SupportedOption( OptionEnum::customOptions() ),
+                  ]
+              );
+          }
 
-        public function providerMetadata(): ProviderMetadata {
-          return WP_CLI_Mock_Provider::metadata();
-        }
+          public function providerMetadata(): ProviderMetadata {
+              return WP_CLI_Mock_Provider::metadata();
+          }
 
-        public function setConfig( ModelConfig $config ): void {
-          $this->config = $config;
-        }
+          public function setConfig( ModelConfig $config ): void {
+              $this->config = $config;
+          }
 
-        public function getConfig(): ModelConfig {
-          return $this->config;
-        }
+          public function getConfig(): ModelConfig {
+              return $this->config;
+          }
 
-        public function generateTextResult(array $prompt): GenerativeAiResult {
-          // throw new RuntimeException('No candidates were generated');
+          public function generateTextResult( array $prompt ): GenerativeAiResult {
+              // throw new RuntimeException('No candidates were generated');
 
-          $modelMessage = new ModelMessage([
-              new MessagePart('This is mock-generated text')
-          ]);
-          $candidate = new Candidate(
-              $modelMessage,
-              FinishReasonEnum::stop(),
-              42
-          );
-          $tokenUsage = new TokenUsage( 10, 42, 52 );
-          return new GenerativeAiResult(
-              'result_123',
-              [ $candidate ],
-              $tokenUsage,
-              $this->providerMetadata(),
-              $this->metadata(),
-              [ 'provider' => 'wp-cli-mock-provider' ]
-          );
-        }
+              $modelMessage = new ModelMessage(
+                  [
+                      new MessagePart( 'This is mock-generated text' ),
+                  ]
+              );
+              $candidate = new Candidate(
+                  $modelMessage,
+                  FinishReasonEnum::stop(),
+                  42
+              );
+              $tokenUsage = new TokenUsage( 10, 42, 52 );
+              return new GenerativeAiResult(
+                  'result_123',
+                  [ $candidate ],
+                  $tokenUsage,
+                  $this->providerMetadata(),
+                  $this->metadata(),
+                  [ 'provider' => 'wp-cli-mock-provider' ]
+              );
+          }
 
-        public function streamGenerateTextResult(array $prompt): Generator {
-            yield from [];
-        }
+          public function streamGenerateTextResult( array $prompt ): Generator {
+              yield from [];
+          }
 
-        public function generateImageResult(array $prompt): GenerativeAiResult {
-          // throw new RuntimeException('No candidates were generated');
+          public function generateImageResult( array $prompt ): GenerativeAiResult {
+              // throw new RuntimeException('No candidates were generated');
 
-          $modelMessage = new ModelMessage( [
-              new MessagePart(
-                // A base64-encoded 1x1 black PNG.
-                new File(
-                  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
-                  'image/png'
-                )
-              )
-          ] );
-          $candidate = new Candidate(
-              $modelMessage,
-              FinishReasonEnum::stop(),
-              42
-          );
-          $tokenUsage = new TokenUsage(10, 42, 52);
-          return new GenerativeAiResult(
-              'result_123',
-              [ $candidate ],
-              $tokenUsage,
-              $this->providerMetadata(),
-              $this->metadata(),
-              [ 'provider' => 'wp-cli-mock-provider' ]
-          );
-        }
-
+              $modelMessage = new ModelMessage(
+                  [
+                      new MessagePart(
+                         // A base64-encoded 1x1 black PNG.
+                          new File(
+                              'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+                              'image/png'
+                          )
+                      ),
+                  ]
+              );
+              $candidate = new Candidate(
+                  $modelMessage,
+                  FinishReasonEnum::stop(),
+                  42
+              );
+              $tokenUsage = new TokenUsage( 10, 42, 52 );
+              return new GenerativeAiResult(
+                  'result_123',
+                  [ $candidate ],
+                  $tokenUsage,
+                  $this->providerMetadata(),
+                  $this->metadata(),
+                  [ 'provider' => 'wp-cli-mock-provider' ]
+              );
+          }
       }
 
       class WP_CLI_Mock_Provider implements ProviderInterface {
-        public static function metadata(): ProviderMetadata {
-          return new ProviderMetadata( 'wp-cli-mock-provider', 'WP-CLI Mock Provider', ProviderTypeEnum::cloud() );
-        }
+          public static function metadata(): ProviderMetadata {
+              return new ProviderMetadata( 'wp-cli-mock-provider', 'WP-CLI Mock Provider', ProviderTypeEnum::cloud() );
+          }
 
-        public static function model( string $modelId, ?ModelConfig $modelConfig = null ): ModelInterface {
-          return new WP_CLI_Mock_Model( $modelId );
-        }
+          public static function model( string $modelId, ?ModelConfig $modelConfig = null ): ModelInterface {
+              return new WP_CLI_Mock_Model( $modelId );
+          }
 
-        public static function availability(): ProviderAvailabilityInterface {
-          return new class() implements ProviderAvailabilityInterface {
-            public function isConfigured(): bool {
-              return true;
-            }
-          };
-        }
+          public static function availability(): ProviderAvailabilityInterface {
+              return new class() implements ProviderAvailabilityInterface {
+                  public function isConfigured(): bool {
+                      return true;
+                  }
+              };
+          }
 
-        public static function modelMetadataDirectory(): ModelMetadataDirectoryInterface {
-          return new class() implements ModelMetadataDirectoryInterface {
-            public function listModelMetadata(): array {
-              return [
-                ( new WP_CLI_Mock_Model( 'wp-cli-mock-model' ) )->metadata()
-              ];
-            }
+          public static function modelMetadataDirectory(): ModelMetadataDirectoryInterface {
+              return new class() implements ModelMetadataDirectoryInterface {
+                  public function listModelMetadata(): array {
+                      return [
+                          ( new WP_CLI_Mock_Model( 'wp-cli-mock-model' ) )->metadata(),
+                      ];
+                  }
 
-            public function hasModelMetadata( string $modelId ): bool {
-              return true;
-            }
+                  public function hasModelMetadata( string $modelId ): bool {
+                      return true;
+                  }
 
-            public function getModelMetadata( string $modelId ): ModelMetadata {
-              return self::model()->metadata();
-            }
-          };
-        }
+                  public function getModelMetadata( string $modelId ): ModelMetadata {
+                      return self::model()->metadata();
+                  }
+              };
+          }
       }
 
       WP_CLI::add_wp_hook(
-        'init',
-        static function () {
-          AiClient::defaultRegistry()->registerProvider( WP_CLI_Mock_Provider::class );
-        }
+          'init',
+          static function () {
+              AiClient::defaultRegistry()->registerProvider( WP_CLI_Mock_Provider::class );
+          }
       );
       """
 
